@@ -39,6 +39,7 @@ getBiomes <- function (points, species="species") {
   result <- matrix(0, nrow=length(taxa), ncol=length(categories))
   rownames(result) <- taxa
   colnames(result) <- categories
+  cat("\n")
   for (taxon_index in seq_along(taxa)) {
     for (category_index in seq_along(categories)) {
       x0 <- points[,species]==taxa[taxon_index]
@@ -68,16 +69,17 @@ thinned_points <- as.data.frame(fread(all_point_files))
   # add information on main biome
   biomes_for_points <- localityToBiome(thinned_points, lat="lat",lon="lon")
   biomes_for_species <- getBiomes(biomes_for_points, species="species") # we want summaries for each species
-  biomes_for_genera <- as.data.frame(biomes_for_genera)
+  #save(biomes_for_species, file="biomes_for_species.Rsave")
+  
+  biomes_for_species <- as.data.frame(biomes_for_species)
   
   closed_canopy <- c("Tropical & Subtropical Moist Broadleaf Forests", "Tropical & Subtropical Dry Broadleaf Forests", "Tropical & Subtropical Coniferous Forests", "Temperate Broadleaf & Mixed Forests", "Temperate Conifer Forests", "Boreal Forests/Taiga")
-  
   open_canopy <- c("Tropical & Subtropical Grasslands, Savannas & Shrubland", "Temperate Grasslands, Savannas & Shrublands", "Flooded Grasslands & Savannas", "Montane Grasslands & Shrublands", "Tundra","Deserts & Xeric Shrublands", "Mediterranean Forests, Woodlands & Scrub",  "Mangroves")
   
-  summary_biome <- data.frame(genera=row.names(biomes_for_genera),closed_canopy=NA,open_canopy=NA,main_habitat=NA)
-  for(genus_index in 1:nrow(biomes_for_genera)) {
-    one_genus <- rownames(biomes_for_genera)[genus_index]
-    subset_biomes <- biomes_for_genera[genus_index,]
+  summary_biome <- data.frame(genera=row.names(biomes_for_species),closed_canopy=NA,open_canopy=NA,main_habitat=NA)
+  for(genus_index in 1:nrow(biomes_for_species)) {
+    one_genus <- rownames(biomes_for_species)[genus_index]
+    subset_biomes <- biomes_for_species[genus_index,]
     closed_canopy_points <- sum(subset_biomes[which(names(subset_biomes)%in%closed_canopy)])
     open_canopy_points <- sum(subset_biomes[which(names(subset_biomes)%in%open_canopy)])
     n_total <- closed_canopy_points+open_canopy_points
@@ -93,17 +95,15 @@ thinned_points <- as.data.frame(fread(all_point_files))
     }
     summary_biome[genus_index,4] <- ifelse(summary_biome[genus_index,3]>0.5,"open","closed")
   }
-  family <- rep(labels[family_index], nrow(summary_biome))
-  all_results[[family_index]] <- cbind(family, summary_biome)
+  
+write.csv(summary_biome, file="summarized_habitat.csv", row.names=F)
 
-all_results <- do.call(rbind, all_results)
-write.csv(all_results, file="datasets/myrtales_habitat.csv", row.names=F)
 #View(all_results)
 #table(all_results$main_habitat)
 
 
 # adding tables for sensitivity analyses:
-habitats <- read.csv("datasets/myrtales_habitat.csv")
+#habitats <- read.csv("summarized_habitat.csv")
 habitats$cutoff_40 <- NA
 habitats$cutoff_60 <- NA
 
@@ -111,5 +111,22 @@ for(i in 1:nrow(habitats)) {
   habitats$cutoff_40[i] <- ifelse(habitats$open_canopy[i]>0.4,"open","closed")
   habitats$cutoff_60[i] <- ifelse(habitats$open_canopy[i]>0.6,"open","closed")
 }
-write.csv(habitats, "datasets/myrtales_habitat.csv", row.names=F)
+
+# adding columns for species that share biomes
+#habitats <- read.csv("summarized_habitat.csv")
+habitats$area_open <- NA
+habitats$area_closed <- NA
+
+for(i in 1:nrow(habitats)) {
+  habitats$area_open[i] <- ifelse(habitats$open_canopy[i]>0.25,1,0)
+  habitats$area_closed[i] <- ifelse(habitats$closed_canopy[i]>0.25,1,0)
+}
+
+#table(rowSums(habitats[,c(5,6)]))
+#   1     2 
+# 27219  6416 
+# 27219 endemic to one habitat
+# 6416 occurring in both habitats
+
+write.csv(habitats, "summarized_habitat.csv", row.names=F)
 

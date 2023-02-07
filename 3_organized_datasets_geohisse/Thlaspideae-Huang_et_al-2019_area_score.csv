@@ -1,0 +1,11 @@
+"species","closed_canopy","open_canopy","main_habitat","area_open","area_closed"
+"Didymophysa_aucheri",0.78,0.22,"closed",0,1
+"Didymophysa_fedtschenkoana",0,1,"open",1,0
+"Graellsia_saxifragifolia",0.38,0.62,"open",1,1
+"Pachyphragma_macrophyllum",0.69,0.31,"closed",1,1
+"Peltaria_alliacea",1,0,"closed",0,1
+"Peltaria_turkmena",0,1,"open",1,0
+"Peltariopsis_planisiliqua",0,1,"open",1,0
+"Pseudocamelina_glaucophylla",0.57,0.43,"closed",1,1
+"Sobolewskia_caucasica",1,0,"closed",0,1
+"Thlaspi_alliaceum",0.69,0.31,"closed",1,1

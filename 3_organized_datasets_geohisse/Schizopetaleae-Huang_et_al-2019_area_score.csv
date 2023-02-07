@@ -1,0 +1,14 @@
+"species","closed_canopy","open_canopy","main_habitat","area_open","area_closed"
+"Mathewsia_auriculata",0.33,0.67,"open",1,1
+"Mathewsia_biennis",0,1,"open",1,0
+"Mathewsia_foliosa",0,1,"open",1,0
+"Mathewsia_incana",0,1,"open",1,0
+"Schizopetalon_arcuatum",0,1,"open",1,0
+"Schizopetalon_bipinnatifidum",0,1,"open",1,0
+"Schizopetalon_biseriatum",0,1,"open",1,0
+"Schizopetalon_brachycarpum",0.67,0.33,"closed",1,1
+"Schizopetalon_dentatum",0.5,0.5,"closed",1,1
+"Schizopetalon_maritimum",0.33,0.67,"open",1,1
+"Schizopetalon_rupestre",0,1,"open",1,0
+"Schizopetalon_tenuifolium",0,1,"open",1,0
+"Schizopetalon_walkeri",0.67,0.33,"closed",1,1

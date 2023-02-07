@@ -1,0 +1,14 @@
+"species","closed_canopy","open_canopy","main_habitat","area_open","area_closed"
+"Alocasia_acuminata",1,0,"closed",0,1
+"Alocasia_cucullata",0.96,0.04,"closed",0,1
+"Alocasia_heterophylla",1,0,"closed",0,1
+"Alocasia_inornata",1,0,"closed",0,1
+"Alocasia_lauterbachiana",1,0,"closed",0,1
+"Alocasia_longiloba",1,0,"closed",0,1
+"Alocasia_maquilingensis",1,0,"closed",0,1
+"Alocasia_odora",1,0,"closed",0,1
+"Alocasia_perakensis",1,0,"closed",0,1
+"Alocasia_princeps",0.83,0.17,"closed",0,1
+"Alocasia_reversa",1,0,"closed",0,1
+"Alocasia_robusta",1,0,"closed",0,1
+"Alocasia_sinuata",0,1,"open",1,0

@@ -1,0 +1,11 @@
+"species","closed_canopy","open_canopy","main_habitat","area_open","area_closed"
+"Thamnosma_africana",0,1,"open",1,0
+"Thamnosma_hirschii",0,1,"open",1,0
+"Thamnosma_montana",0.04,0.96,"open",1,0
+"Thamnosma_pailensis",0.5,0.5,"closed",1,1
+"Thamnosma_rhodesica",0,1,"open",1,0
+"Thamnosma_socotrana",0,1,"open",1,0
+"Thamnosma_somalensis",0,1,"open",1,0
+"Thamnosma_stanfordii",0,1,"open",1,0
+"Thamnosma_texana",0.18,0.82,"open",1,0
+"Thamnosma_trifoliata",0,1,"open",1,0

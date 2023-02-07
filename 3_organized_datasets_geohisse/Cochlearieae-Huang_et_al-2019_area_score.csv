@@ -1,0 +1,9 @@
+"species","closed_canopy","open_canopy","main_habitat","area_open","area_closed"
+"Cochlearia_anglica",1,0,"closed",0,1
+"Cochlearia_officinalis",0.46,0.54,"open",1,1
+"Cochlearia_pyrenaica",1,0,"closed",0,1
+"Ionopsidium_abulense",0.22,0.78,"open",1,0
+"Ionopsidium_acaule",0.86,0.14,"closed",0,1
+"Ionopsidium_albiflorum",0.5,0.5,"closed",1,1
+"Ionopsidium_prolongoi",0.07,0.93,"open",1,0
+"Ionopsidium_savianum",0,1,"open",1,0

@@ -1,0 +1,17 @@
+"species","closed_canopy","open_canopy","main_habitat","area_open","area_closed"
+"Hordeum_bogdanii",0.09,0.91,"open",1,0
+"Hordeum_brevisubulatum",0.22,0.78,"open",1,0
+"Hordeum_bulbosum",0.05,0.95,"open",1,0
+"Hordeum_chilense",0.67,0.33,"closed",1,1
+"Hordeum_comosum",0.17,0.83,"open",1,0
+"Hordeum_cordobense",0,1,"open",1,0
+"Hordeum_erectifolium",0,1,"open",1,0
+"Hordeum_euclaston",0.01,0.99,"open",1,0
+"Hordeum_flexuosum",0,1,"open",1,0
+"Hordeum_murinum",0.22,0.78,"open",1,0
+"Hordeum_muticum",0.18,0.82,"open",1,0
+"Hordeum_patagonicum",0.03,0.97,"open",1,0
+"Hordeum_pubiflorum",0.32,0.68,"open",1,1
+"Hordeum_pusillum",0.27,0.73,"open",1,1
+"Hordeum_roshevitzii",0.25,0.75,"open",1,0
+"Hordeum_stenostachys",0.08,0.92,"open",1,0

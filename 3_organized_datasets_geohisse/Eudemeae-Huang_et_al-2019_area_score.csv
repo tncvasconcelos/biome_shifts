@@ -1,0 +1,16 @@
+"species","closed_canopy","open_canopy","main_habitat","area_open","area_closed"
+"Aschersoniodoxa_cachensis",0,1,"open",1,0
+"Aschersoniodoxa_mandoniana",0.33,0.67,"open",1,1
+"Brayopsis_alpaminae",0,1,"open",1,0
+"Brayopsis_calycina",0.12,0.88,"open",1,0
+"Brayopsis_colombiana",0,1,"open",1,0
+"Brayopsis_diapensioides",0.33,0.67,"open",1,1
+"Brayopsis_monimocalyx",0,1,"open",1,0
+"Eudema_rupestris",0,1,"open",1,0
+"Onuris_alismatifolia",0.67,0.33,"closed",1,1
+"Onuris_graminifolia",0.53,0.47,"closed",1,1
+"Onuris_hatcheriana",0,1,"open",1,0
+"Onuris_papillosa",0.2,0.8,"open",1,0
+"Onuris_spegazziniana",0,1,"open",1,0
+"Xerodraba_lycopodioides",0,1,"open",1,0
+"Xerodraba_patagonica",0,1,"open",1,0

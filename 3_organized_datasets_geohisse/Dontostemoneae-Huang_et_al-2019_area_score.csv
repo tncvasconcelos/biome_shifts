@@ -1,0 +1,15 @@
+"species","closed_canopy","open_canopy","main_habitat","area_open","area_closed"
+"Clausia_aprica",0.53,0.47,"closed",1,1
+"Clausia_kasakhorum",0,1,"open",1,0
+"Clausia_trichosepala",0.5,0.5,"closed",1,1
+"Dontostemon_crassifolius",0,1,"open",1,0
+"Dontostemon_dentatus",0.89,0.11,"closed",0,1
+"Dontostemon_elegans",0.14,0.86,"open",1,0
+"Dontostemon_glandulosus",0.16,0.84,"open",1,0
+"Dontostemon_hispidus",1,0,"closed",0,1
+"Dontostemon_integrifolius",0.42,0.58,"open",1,1
+"Dontostemon_intermedius",1,0,"closed",0,1
+"Dontostemon_micranthus",0.6,0.4,"closed",1,1
+"Dontostemon_perennis",0.25,0.75,"open",1,0
+"Dontostemon_pinnatifidus",0.36,0.64,"open",1,1
+"Dontostemon_senilis",0.44,0.56,"open",1,1
