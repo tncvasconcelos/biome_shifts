@@ -35,9 +35,9 @@ library(hisse)
 library(parallel)
 
 ### Import data
-group = names(pilot_areas)[1] # name the group
-tree <- pilot_trees[[1]] # load tree file 
-dist <- pilot_areas[[1]] # load distribution file 
+group = names(pilot_areas)[7] # name the group
+tree <- pilot_trees[[7]] # load tree file 
+dist <- pilot_areas[[7]] # load distribution file 
 
 # Preparing data - areas have to be as 0 (11 - widespread), 
 # 1 (10, endemic of first area) 
@@ -83,10 +83,9 @@ dat=states
 ## Model 1 - Dispersal parameters vary only, no range-dependent diversification. 
 speciation <- c(1,1,1)
 extirpation <- c(1,1)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=0, include.jumps=FALSE
-                                    , separate.extirpation=FALSE) 
-mod1 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                 hidden.areas=FALSE, trans.rate=trans.rate, assume.cladogenetic=TRUE) 
+trans.rate <- TransMatMakerGeoHiSSE( include.jumps=FALSE, separate.extirpation=FALSE) 
+mod1 <- GeoHiSSE(phy, dat, f=sf, trans.rate=trans.rate, assume.cladogenetic=TRUE, sann=F) 
+
 
 ## Model 2. Canonical GeoSSE model, range effect on diversification 
 speciation <- c(1,2,3)
