@@ -471,9 +471,9 @@ saveRDS(list.geohisse, file=paste(group, "GeoHiSSE.models", ".RData", sep="_"))
 ##########################################################################################
 
 recon.mod1 <- MarginReconGeoSSE(phy = mod1$phy, data = mod1$data, f = mod1$f,
-                                pars = mod1$solution, hidden.areas = mod1$hidden.areas,
+                                pars = mod1$solution, 
                                 root.type = mod1$root.type, root.p = mod1$root.p,
-                                aic = mod1$AIC, n.cores = 4)
+                                 n.cores = 4)
 recon.mod2 <- MarginReconGeoSSE(phy = mod2$phy, data = mod2$data, f = mod2$f,
                                 pars = mod2$solution, hidden.areas = mod2$hidden.areas, 
                                 root.type = mod2$root.type, root.p = mod2$root.p,
