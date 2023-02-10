@@ -31,14 +31,13 @@ pilot_trees <- all_trees[pilot]
 # Hidden state models improve state‐dependent diversification approaches, 
 # including biogeographical models. Evolution, 72(11), 2308-2324.
 
-library(ape)
 library(hisse)
 library(parallel)
 
 ### Import data
-group = "meh" # name the group
-tree <- read.tree(file.choose()) # load tree file 
-dist <- read.csv(file.choose()) # load distribution file 
+group = names(pilot_areas)[1] # name the group
+tree <- pilot_trees[[1]] # load tree file 
+dist <- pilot_areas[[1]] # load distribution file 
 
 # Preparing data - areas have to be as 0 (11 - widespread), 
 # 1 (10, endemic of first area) 
@@ -46,20 +45,20 @@ dist <- read.csv(file.choose()) # load distribution file
 
 areas <- as.data.frame(rep(1, nrow(dist)))
 dist <- cbind(dist, areas)
-colnames(dist)[4] <- "area"
+colnames(dist)[7] <- "area"
 
 for (i in 1:length(dist$area)){
-  if (dist[i, "campo_rupestre"] == 1 && dist[i, "non_campo_rupestre"]  == 1){
+  if (dist[i, "area_open"] == 1 && dist[i, "area_closed"]  == 1){
     dist[i, "area"] = 0 
   }
-  if (dist[i, "campo_rupestre"] == 0 && dist[i, "non_campo_rupestre"]  == 1){
+  if (dist[i, "area_open"] == 0 && dist[i, "area_closed"]  == 1){
     dist[i, "area"] = 1
   }
-  if (dist[i, "campo_rupestre"] == 1 && dist[i, "non_campo_rupestre"]  == 0){
+  if (dist[i, "area_open"] == 1 && dist[i, "area_closed"]  == 0){
     dist[i, "area"] = 2
   }
 }
-states<-dist[,c("X", "area")]
+states<-dist[,c("species", "area")]
 
 table(states$area) # check if species-richness in each range make sense
 
