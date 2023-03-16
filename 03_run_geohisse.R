@@ -35,32 +35,36 @@ library(hisse)
 library(parallel)
 
 ### Import data
-group = names(pilot_areas)[7] # name the group
-tree <- pilot_trees[[7]] # load tree file 
-dist <- pilot_areas[[7]] # load distribution file 
-
-# Preparing data - areas have to be as 0 (11 - widespread), 
-# 1 (10, endemic of first area) 
-# and 2 (01, endemic of second area)
-
-areas <- as.data.frame(rep(1, nrow(dist)))
-dist <- cbind(dist, areas)
-colnames(dist)[7] <- "area"
-
-for (i in 1:length(dist$area)){
-  if (dist[i, "area_open"] == 1 && dist[i, "area_closed"]  == 1){
-    dist[i, "area"] = 0 
+pilot_states <- list()
+for (group_index in 1:length(pilot_trees)) {
+  group = names(pilot_areas)[group_index] # name the group
+  tree <- pilot_trees[[group_index]] # load tree file 
+  dist <- pilot_areas[[group_index]] # load distribution file 
+  
+  # Preparing data - areas have to be as 0 (11 - widespread), 
+  # 1 (10, endemic of first area) 
+  # and 2 (01, endemic of second area)
+  
+  areas <- as.data.frame(rep(1, nrow(dist)))
+  dist <- cbind(dist, areas)
+  colnames(dist)[7] <- "area"
+  
+  for (i in 1:length(dist$area)){
+    if (dist[i, "area_open"] == 1 && dist[i, "area_closed"]  == 1){
+      dist[i, "area"] = 0 
+    }
+    if (dist[i, "area_open"] == 0 && dist[i, "area_closed"]  == 1){
+      dist[i, "area"] = 1
+    }
+    if (dist[i, "area_open"] == 1 && dist[i, "area_closed"]  == 0){
+      dist[i, "area"] = 2
+    }
   }
-  if (dist[i, "area_open"] == 0 && dist[i, "area_closed"]  == 1){
-    dist[i, "area"] = 1
-  }
-  if (dist[i, "area_open"] == 1 && dist[i, "area_closed"]  == 0){
-    dist[i, "area"] = 2
-  }
+  pilot_states[[group_index]]<-dist[,c("species", "area")]
+  names(pilot_states)[group_index] <- group
 }
-states<-dist[,c("species", "area")]
 
-table(states$area) # check if species-richness in each range make sense
+#table(states$area) # check if species-richness in each range make sense
 
 # 2 - cr "endemic"
 # 1 - non-cr "endemic"
@@ -70,6 +74,9 @@ table(states$area) # check if species-richness in each range make sense
 sf<-c(1,1,1) # e.g. if it's fully sampled 
 
 #
+
+# For each run, we will use one pilot_tree and the equivalent pilot_states
+
 phy=tree
 dat=states
 
