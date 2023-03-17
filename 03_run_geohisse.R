@@ -1,5 +1,5 @@
 # rm(list=ls())
-setwd("~/Desktop/biome_shifts/")
+setwd("~/biome_shifts/")
 
 library(ape)
 
@@ -83,350 +83,325 @@ dat=states
 # We used the same 18 models of Caetano et al. (2018) (plus a second set of models including jump dispersal) - see their original publication for more information
 
 ###############################################################################
+## Mods 1 through 6
 ## Block of GeoSSE-like models.
 ## Here extirpation is linked to range reduction.
 ###############################################################################
 
-## Model 1 - Dispersal parameters vary only, no range-dependent diversification. 
-speciation <- c(1,1,1)
-extirpation <- c(1,1)
-trans.rate <- TransMatMakerGeoHiSSE( include.jumps=FALSE, separate.extirpation=FALSE) 
-mod1 <- GeoHiSSE(phy, dat, f=sf, trans.rate=trans.rate, assume.cladogenetic=TRUE, sann=F) 
-
-
-## Model 2. Canonical GeoSSE model, range effect on diversification 
-speciation <- c(1,2,3)
-extirpation <- c(1,2)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=0, include.jumps=FALSE
-                                    , separate.extirpation=FALSE) 
-mod2 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation , extirpation=extirpation,
-                 hidden.areas=FALSE , trans.rate=trans.rate, assume.cladogenetic=TRUE)
-
-## Model 3. Heterogeneous diversification, not tied to range evolution.
-## Assumes three distinct diversification rates.
-## Dispersion parameters across hidden areas are the same.
-speciation <- c(1,1,1,2,2,2,3,3,3)
-extirpation <- c(1,1,2,2,3,3)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=2, make.null=TRUE
-                                    , include.jumps=FALSE, separate.extirpation=FALSE) 
-mod3 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                 hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=TRUE) 
-
-## Model 4. Heterogeneous diversification, tied to range evolution. 
-## Assumes 6 distinct diversification rates.
-speciation <- c(1,2,3,4,5,6)
-extirpation <- c(1,2,3,4)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=1, include.jumps=FALSE , 
-                                    separate.extirpation=FALSE)
-mod4 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation
-                 , extirpation=extirpation, hidden.areas=TRUE
-                 , trans.rate=trans.rate, assume.cladogenetic=TRUE)
-
-## Model 5. Heterogeneous diversification, not tied to range evolution. 
-## Assumes 5 distinct diversification rates.
-speciation <- c(rep(1,3), rep(2,3), rep(3,3), rep(4,3), rep(5,3)) 
-extirpation <- c(rep(1,2), rep(2,2), rep(3,2), rep(4,2), rep(5,2)) 
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=4, make.null=TRUE, 
-                                    include.jumps=FALSE, separate.extirpation=FALSE) 
-mod5 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                 hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=TRUE)
-
-## Model 6. Heterogeneous diversification, not tied to range evolution. 
-## Assumes two distinct diversification rates.
-speciation <- c(1,1,1,2,2,2)
-extirpation <- c(1,1,2,2)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=1, include.jumps=FALSE , 
-                                    separate.extirpation=FALSE)
-mod6 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation
-                 , extirpation=extirpation, hidden.areas=TRUE
-                 , trans.rate=trans.rate, assume.cladogenetic=TRUE)
-
 ###############################################################################
+## Mods 7 through 12
 ## Block of GeoSSE+extinction models.
 ## Here extirpation is NOT linked to range reduction.
 ## Range reduction is different from the extinction of an endemic lineage.
 ###############################################################################
-## Model 7 - Dispersal parameters vary only, no range-dependent diversification. 
-speciation <- c(1,1,1)
-extirpation <- c(1,1)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=0, include.jumps=FALSE
-                                    , separate.extirpation=TRUE) 
-mod7 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                 hidden.areas=FALSE , trans.rate=trans.rate, assume.cladogenetic=TRUE)
-
-## Model 8. GeoSSE model, with range effect on diversification speciation <- c(1,2,3)
-extirpation <- c(1,2)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=0, include.jumps=FALSE
-                                    , separate.extirpation=TRUE) 
-mod8 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                 hidden.areas=FALSE, trans.rate=trans.rate, assume.cladogenetic=TRUE)
-
-## Model 9. Heterogeneous diversification, not tied to range evolution.
-## Assumes three distinct diversification rates.
-speciation <- c(1,1,1,2,2,2,3,3,3)
-extirpation <- c(1,1,2,2,3,3)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=2, make.null=TRUE,include.jumps=FALSE,
-                                    separate.extirpation=TRUE)
-mod9 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                 hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=TRUE)
-
-## Model 10. Heterogeneous diversification, tied to range evolution.
-## Assumes 6 distinct diversification rates.
-speciation <- c(1,2,3,4,5,6)
-extirpation <- c(1,2,3,4)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=1, include.jumps=FALSE, 
-                                    separate.extirpation=TRUE) 
-mod10 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                  hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=TRUE)
-
-## Model 11. Heterogeneous diversification, not tied to range evolution. 
-## Assumes 5 distinct diversification rates.
-speciation <- c(rep(1,3), rep(2,3), rep(3,3), rep(4,3), rep(5,3)) 
-extirpation <- c(rep(1,2), rep(2,2), rep(3,2), rep(4,2), rep(5,2)) 
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=4, make.null=TRUE, include.jumps=FALSE,
-                                    separate.extirpation=TRUE) 
-mod11 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                  hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=TRUE)
-
-## Model 12. Heterogeneous diversification, not tied to range evolution. 
-## Assumes two distinct diversification rates.
-speciation <- c(1,1,1,2,2,2)
-extirpation <- c(1,1,2,2)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=1, include.jumps=FALSE , 
-                                    separate.extirpation=TRUE)
-mod12 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation , extirpation=extirpation,
-                  hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=TRUE)
 
 ###############################################################################
+## Mods 13 through 18
 ## Block of anagenetic geographic models (MuSSE).
 ## Here models emulate GeoSSE (or GeoHiSSE) but changes only happen along branches.
 ###############################################################################
-## Model 13. Transitions only. No character effect on diversification
-speciation <- c(1,1,1)
-extirpation <- c(1,1,1)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=0, include.jumps=FALSE
-                                    , separate.extirpation=TRUE) 
-mod13 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, 
-                  extirpation=extirpation, hidden.areas=FALSE, trans.rate=trans.rate, 
-                  assume.cladogenetic=FALSE) 
 
-## Model 14. Character effect on diversification.
-speciation <- c(1,2,3)
-extirpation <- c(1,2,3)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=0, include.jumps=FALSE
-                                    , separate.extirpation=TRUE) 
-mod14 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation , extirpation=extirpation,
-                  hidden.areas=FALSE, trans.rate=trans.rate, assume.cladogenetic=FALSE)
-
-## Model 15. No character effect on diversification.
-speciation <- c(1,1,1,2,2,2,3,3,3)
-extirpation <- c(1,1,1,2,2,2,3,3,3)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=2, include.jumps=FALSE
-                                    , separate.extirpation=TRUE, make.null=TRUE) 
-mod15 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                  hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=FALSE)
-
-## Model 16. Character effect on diversification, with a hidden state
-speciation <- c(1,2,3,4,5,6)
-extirpation <- c(1,2,3,4,5,6)
-trans.rate <- trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=1, include.jumps=FALSE
-                                                  , separate.extirpation=TRUE)
-mod16 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                  hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=FALSE)
-
-## Model 17. No character effect on diversification, multiple shifts
-speciation <- c(rep(1,3), rep(2,3), rep(3,3), rep(4,3), rep(5,3))
-extirpation <- c(rep(1,3), rep(2,3), rep(3,3), rep(4,3), rep(5,3))
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=4, include.jumps=FALSE,
-                                    separate.extirpation=TRUE, make.null=TRUE) 
-mod17 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                  hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=FALSE) 
-
-## Model 18. No character effect on diversification, multiple shifts.
-speciation <- c(rep(1,3), rep(2,3))
-extirpation <- c(rep(1,3), rep(2,3))
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=1, include.jumps=FALSE, 
-                                    separate.extirpation=TRUE, make.null=TRUE)
-mod18 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation
-                  , hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=FALSE)
-
-
-#################### JUMP MODELS ##########################
-#################### JUMP MODELS ##########################
-#################### JUMP MODELS ##########################
-#################### JUMP MODELS ##########################
-#################### JUMP MODELS ##########################
-
-## argument "include.jumps" set to TRUE
-
+#################### vvvvv JUMP vvvvv MODELS vvvvv ########################## 
 ###############################################################################
+## Mods 19 through 24
 ## Block of GeoSSE-like models.
 ## Here extirpation is linked to range reduction.
 ###############################################################################
-## Model 19 - Dispersal parameters vary only, no range-dependent diversification. 
-speciation <- c(1,1,1)
-extirpation <- c(1,1)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=0, include.jumps=TRUE 
-                                    , separate.extirpation=FALSE) 
-mod19 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                  hidden.areas=FALSE, trans.rate=trans.rate, assume.cladogenetic=TRUE) 
-
-## Model 20. Canonical GeoSSE model, range effect on diversification 
-speciation <- c(1,2,3)
-extirpation <- c(1,2)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=0, include.jumps=TRUE
-                                    , separate.extirpation=FALSE) 
-mod20 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation , extirpation=extirpation,
-                  hidden.areas=FALSE , trans.rate=trans.rate, assume.cladogenetic=TRUE)
-
-## Model 21. Heterogeneous diversification, not tied to range evolution.
-## Assumes three distinct diversification rates.
-## Dispersion parameters across hidden areas are the same.
-speciation <- c(1,1,1,2,2,2,3,3,3)
-extirpation <- c(1,1,2,2,3,3)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=2, make.null=TRUE
-                                    , include.jumps=TRUE, separate.extirpation=FALSE) 
-mod21 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                  hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=TRUE) 
-
-## Model 22. Heterogeneous diversification, tied to range evolution. 
-## Assumes 6 distinct diversification rates.
-speciation <- c(1,2,3,4,5,6)
-extirpation <- c(1,2,3,4)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=1, include.jumps=TRUE , 
-                                    separate.extirpation=FALSE)
-mod22 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation
-                  , extirpation=extirpation, hidden.areas=TRUE
-                  , trans.rate=trans.rate, assume.cladogenetic=TRUE)
-
-## Model 23. Heterogeneous diversification, not tied to range evolution. 
-## Assumes 5 distinct diversification rates.
-speciation <- c(rep(1,3), rep(2,3), rep(3,3), rep(4,3), rep(5,3)) 
-extirpation <- c(rep(1,2), rep(2,2), rep(3,2), rep(4,2), rep(5,2)) 
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=4, make.null=TRUE, 
-                                    include.jumps=TRUE, separate.extirpation=FALSE) 
-mod23 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                  hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=TRUE)
-
-## Model 24. Heterogeneous diversification, not tied to range evolution. 
-## Assumes two distinct diversification rates.
-speciation <- c(1,1,1,2,2,2)
-extirpation <- c(1,1,2,2)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=1, include.jumps=TRUE , 
-                                    separate.extirpation=FALSE)
-mod24 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation
-                  , extirpation=extirpation, hidden.areas=TRUE
-                  , trans.rate=trans.rate, assume.cladogenetic=TRUE)
 
 ###############################################################################
+## Mods 25 through 30
 ## Block of GeoSSE+extinction models.
 ## Here extirpation is NOT linked to range reduction.
 ## Range reduction is different from the extinction of an endemic lineage.
 ###############################################################################
-## Model 25 - Dispersal parameters vary only, no range-dependent diversification. 
-speciation <- c(1,1,1)
-extirpation <- c(1,1)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=0, include.jumps=TRUE
-                                    , separate.extirpation=TRUE) 
-mod25 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                  hidden.areas=FALSE , trans.rate=trans.rate, assume.cladogenetic=TRUE)
-
-## Model 26. GeoSSE model, with range effect on diversification speciation <- c(1,2,3)
-extirpation <- c(1,2)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=0, include.jumps=TRUE
-                                    , separate.extirpation=TRUE) 
-mod26 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                  hidden.areas=FALSE, trans.rate=trans.rate, assume.cladogenetic=TRUE)
-
-## Model 27. Heterogeneous diversification, not tied to range evolution.
-## Assumes three distinct diversification rates.
-speciation <- c(1,1,1,2,2,2,3,3,3)
-extirpation <- c(1,1,2,2,3,3)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=2, make.null=TRUE,include.jumps=TRUE,
-                                    separate.extirpation=TRUE)
-mod27 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                  hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=TRUE)
-
-## Model 28. Heterogeneous diversification, tied to range evolution.
-## Assumes 6 distinct diversification rates.
-speciation <- c(1,2,3,4,5,6)
-extirpation <- c(1,2,3,4)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=1, include.jumps=TRUE, 
-                                    separate.extirpation=TRUE) 
-mod28 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                  hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=TRUE)
-
-## Model 29. Heterogeneous diversification, not tied to range evolution. 
-## Assumes 5 distinct diversification rates.
-speciation <- c(rep(1,3), rep(2,3), rep(3,3), rep(4,3), rep(5,3)) 
-extirpation <- c(rep(1,2), rep(2,2), rep(3,2), rep(4,2), rep(5,2)) 
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=4, make.null=TRUE, include.jumps=TRUE,
-                                    separate.extirpation=TRUE) 
-mod29 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                  hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=TRUE)
-
-## Model 30. Heterogeneous diversification, not tied to range evolution. 
-## Assumes two distinct diversification rates.
-speciation <- c(1,1,1,2,2,2)
-extirpation <- c(1,1,2,2)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=1, include.jumps=TRUE , 
-                                    separate.extirpation=TRUE)
-mod30 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation , extirpation=extirpation,
-                  hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=TRUE)
 
 ###############################################################################
+## Mods 31 through 36
 ## Block of anagenetic geographic models (MuSSE).
 ## Here models emulate GeoSSE (or GeoHiSSE) but changes only happen along branches.
 ###############################################################################
-## Model 31. Transitions only. No character effect on diversification
-speciation <- c(1,1,1)
-extirpation <- c(1,1,1)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=0, include.jumps=TRUE
-                                    , separate.extirpation=TRUE) 
-mod31 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, 
-                  extirpation=extirpation, hidden.areas=FALSE, trans.rate=trans.rate, 
-                  assume.cladogenetic=FALSE) 
 
-## Model 32. Character effect on diversification.
-speciation <- c(1,2,3)
-extirpation <- c(1,2,3)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=0, include.jumps=TRUE
-                                    , separate.extirpation=TRUE) 
-mod32 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation , extirpation=extirpation,
-                  hidden.areas=FALSE, trans.rate=trans.rate, assume.cladogenetic=FALSE)
+model_set <- list(
+    list(
+        ## Model 1 - Dispersal parameters vary only, no range-dependent diversification. 
+        speciation <- c(1,1,1),
+        extirpation <- c(1,1),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=0, include.jumps=FALSE, separate.extirpation=FALSE) 
+    ),
+    list(
+        ## Model 2. Canonical GeoSSE model, range effect on diversification 
+        speciation <- c(1,2,3),
+        extirpation <- c(1,2),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=0, include.jumps=FALSE, separate.extirpation=FALSE) 
+    ),
+    list(
+        ## Model 3. Heterogeneous diversification, not tied to range evolution.
+        speciation <- c(1,1,1,2,2,2,3,3,3),
+        extirpation <- c(1,1,2,2,3,3),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=2, make.null=TRUE, include.jumps=FALSE, separate.extirpation=FALSE)
+    ),
+    list(
+        ## Model 4. Heterogeneous diversification, tied to range evolution. 
+        ## Assumes 6 distinct diversification rates.
+        speciation <- c(1,2,3,4,5,6),
+        extirpation <- c(1,2,3,4),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=1, include.jumps=FALSE , 
+                                            separate.extirpation=FALSE)
 
-## Model 33. No character effect on diversification.
-speciation <- c(1,1,1,2,2,2,3,3,3)
-extirpation <- c(1,1,1,2,2,2,3,3,3)
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=2, include.jumps=TRUE
-                                    , separate.extirpation=TRUE, make.null=TRUE) 
-mod33 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                  hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=FALSE)
+    ),
+    list(
+        ## Model 5. Heterogeneous diversification, not tied to range evolution. 
+        ## Assumes 5 distinct diversification rates.
+        speciation <- c(rep(1,3), rep(2,3), rep(3,3), rep(4,3), rep(5,3)),
+        extirpation <- c(rep(1,2), rep(2,2), rep(3,2), rep(4,2), rep(5,2)),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=4, make.null=TRUE, 
+                                            include.jumps=FALSE, separate.extirpation=FALSE) 
+    ),
+    list(
+        ## Model 6. Heterogeneous diversification, not tied to range evolution. 
+        ## Assumes two distinct diversification rates.
+        speciation <- c(1,1,1,2,2,2),
+        extirpation <- c(1,1,2,2),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=1, include.jumps=FALSE , 
+                                            separate.extirpation=FALSE)
+    ),
+    list(
+        ## Model 7 - Dispersal parameters vary only, no range-dependent diversification. 
+        speciation <- c(1,1,1),
+        extirpation <- c(1,1),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=0, include.jumps=FALSE
+                                            , separate.extirpation=TRUE) 
+    ),
+    list(
+        ## Model 8. GeoSSE model, with range effect on diversification
+        speciation <- c(1,2,3),
+        extirpation <- c(1,2),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=0, include.jumps=FALSE
+                                            , separate.extirpation=TRUE) 
+    ),
+    list(
+        ## Model 9. Heterogeneous diversification, not tied to range evolution.
+        ## Assumes three distinct diversification rates.
+        speciation <- c(1,1,1,2,2,2,3,3,3),
+        extirpation <- c(1,1,2,2,3,3),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=2, make.null=TRUE,include.jumps=FALSE,
+                                            separate.extirpation=TRUE)
+    ),
+    list(
+        ## Model 10. Heterogeneous diversification, tied to range evolution.
+        ## Assumes 6 distinct diversification rates.
+        speciation <- c(1,2,3,4,5,6),
+        extirpation <- c(1,2,3,4),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=1, include.jumps=FALSE, 
+                                            separate.extirpation=TRUE) 
+    ),
+    list(
+        ## Model 11. Heterogeneous diversification, not tied to range evolution. 
+        ## Assumes 5 distinct diversification rates.
+        speciation <- c(rep(1,3), rep(2,3), rep(3,3), rep(4,3), rep(5,3)),
+        extirpation <- c(rep(1,2), rep(2,2), rep(3,2), rep(4,2), rep(5,2)),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=4, make.null=TRUE, include.jumps=FALSE,
+                                            separate.extirpation=TRUE) 
+    ),
+    list(
+        ## Model 12. Heterogeneous diversification, not tied to range evolution. 
+        ## Assumes two distinct diversification rates.
+        speciation <- c(1,1,1,2,2,2),
+        extirpation <- c(1,1,2,2),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=1, include.jumps=FALSE , 
+                                            separate.extirpation=TRUE)
+    ),
+    list(
+        ## Model 13. Transitions only. No character effect on diversification
+        speciation <- c(1,1,1),
+        extirpation <- c(1,1,1),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=0, include.jumps=FALSE
+                                            , separate.extirpation=TRUE) 
+    ),
+    list(
+        ## Model 14. Character effect on diversification.
+        speciation <- c(1,2,3),
+        extirpation <- c(1,2,3),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=0, include.jumps=FALSE
+                                            , separate.extirpation=TRUE) 
+    ),
+    list(
+        ## Model 15. No character effect on diversification.
+        speciation <- c(1,1,1,2,2,2,3,3,3),
+        extirpation <- c(1,1,1,2,2,2,3,3,3),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=2, include.jumps=FALSE
+                                            , separate.extirpation=TRUE, make.null=TRUE) 
+    ),
+    list(
+        ## Model 16. Character effect on diversification, with a hidden state
+        speciation <- c(1,2,3,4,5,6),
+        extirpation <- c(1,2,3,4,5,6),
+        trans.rate <- trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=1, include.jumps=FALSE
+                                                        , separate.extirpation=TRUE)
+    ),
+    list(
+        ## Model 17. No character effect on diversification, multiple shifts
+        speciation <- c(rep(1,3), rep(2,3), rep(3,3), rep(4,3), rep(5,3)),
+        extirpation <- c(rep(1,3), rep(2,3), rep(3,3), rep(4,3), rep(5,3)),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=4, include.jumps=FALSE,
+                                            separate.extirpation=TRUE, make.null=TRUE) 
+    ),
+    list(
+        ## Model 18. No character effect on diversification, multiple shifts.
+        speciation <- c(rep(1,3), rep(2,3)),
+        extirpation <- c(rep(1,3), rep(2,3)),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=1, include.jumps=FALSE, 
+                                            separate.extirpation=TRUE, make.null=TRUE)
+    ),
+    list(
+        ## Model 19 - Dispersal parameters vary only, no range-dependent diversification. 
+        speciation <- c(1,1,1),
+        extirpation <- c(1,1),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=0, include.jumps=TRUE 
+                                            , separate.extirpation=FALSE) 
+    ),
+    list(
+        ## Model 20. Canonical GeoSSE model, range effect on diversification 
+        speciation <- c(1,2,3),
+        extirpation <- c(1,2),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=0, include.jumps=TRUE
+                                            , separate.extirpation=FALSE) 
+    ),
+    list(
+        ## Model 21. Heterogeneous diversification, not tied to range evolution.
+        ## Assumes three distinct diversification rates.
+        ## Dispersion parameters across hidden areas are the same.
+        speciation <- c(1,1,1,2,2,2,3,3,3),
+        extirpation <- c(1,1,2,2,3,3),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=2, make.null=TRUE
+                                            , include.jumps=TRUE, separate.extirpation=FALSE) 
+    ),
+    list(
+        ## Model 22. Heterogeneous diversification, tied to range evolution. 
+        ## Assumes 6 distinct diversification rates.
+        speciation <- c(1,2,3,4,5,6),
+        extirpation <- c(1,2,3,4),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=1, include.jumps=TRUE , 
+                                            separate.extirpation=FALSE)
+    ),
+    list(
+        ## Model 23. Heterogeneous diversification, not tied to range evolution. 
+        ## Assumes 5 distinct diversification rates.
+        speciation <- c(rep(1,3), rep(2,3), rep(3,3), rep(4,3), rep(5,3)) ,
+        extirpation <- c(rep(1,2), rep(2,2), rep(3,2), rep(4,2), rep(5,2)) ,
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=4, make.null=TRUE, 
+                                            include.jumps=TRUE, separate.extirpation=FALSE) 
+    ),
+    list(
+        ## Model 24. Heterogeneous diversification, not tied to range evolution. 
+        ## Assumes two distinct diversification rates.
+        speciation <- c(1,1,1,2,2,2),
+        extirpation <- c(1,1,2,2),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=1, include.jumps=TRUE , 
+                                            separate.extirpation=FALSE)
+    ),
+    list(
+        ## Model 25 - Dispersal parameters vary only, no range-dependent diversification. 
+        speciation <- c(1,1,1),
+        extirpation <- c(1,1),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=0, include.jumps=TRUE
+                                            , separate.extirpation=TRUE) 
+    ),
+    list(
+        ## Model 26. GeoSSE model, with range effect on diversification 
+        speciation <- c(1,2,3),
+        extirpation <- c(1,2),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=0, include.jumps=TRUE
+                                            , separate.extirpation=TRUE) 
+    ),
+    list(
+        ## Model 27. Heterogeneous diversification, not tied to range evolution.
+        ## Assumes three distinct diversification rates.
+        speciation <- c(1,1,1,2,2,2,3,3,3),
+        extirpation <- c(1,1,2,2,3,3),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=2, make.null=TRUE,include.jumps=TRUE,
+                                            separate.extirpation=TRUE)
+    ),
+    list(
+        ## Model 28. Heterogeneous diversification, tied to range evolution.
+        ## Assumes 6 distinct diversification rates.
+        speciation <- c(1,2,3,4,5,6),
+        extirpation <- c(1,2,3,4),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=1, include.jumps=TRUE, 
+                                            separate.extirpation=TRUE) 
+    ),
+    list(
+        ## Model 29. Heterogeneous diversification, not tied to range evolution. 
+        ## Assumes 5 distinct diversification rates.
+        speciation <- c(rep(1,3), rep(2,3), rep(3,3), rep(4,3), rep(5,3)) ,
+        extirpation <- c(rep(1,2), rep(2,2), rep(3,2), rep(4,2), rep(5,2)) ,
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=4, make.null=TRUE, include.jumps=TRUE,
+                                            separate.extirpation=TRUE) 
+    ),
+    list(
+        ## Model 30. Heterogeneous diversification, not tied to range evolution. 
+        ## Assumes two distinct diversification rates.
+        speciation <- c(1,1,1,2,2,2),
+        extirpation <- c(1,1,2,2),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=1, include.jumps=TRUE , 
+                                            separate.extirpation=TRUE)
+    ),
+    list(
+        ## Model 31. Transitions only. No character effect on diversification
+        speciation <- c(1,1,1),
+        extirpation <- c(1,1,1),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=0, include.jumps=TRUE
+                                            , separate.extirpation=TRUE) 
+    ),
+    list(
+        ## Model 32. Character effect on diversification.
+        speciation <- c(1,2,3),
+        extirpation <- c(1,2,3),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=0, include.jumps=TRUE
+                                            , separate.extirpation=TRUE) 
+    ),
+    list(
+        ## Model 33. No character effect on diversification.
+        speciation <- c(1,1,1,2,2,2,3,3,3),
+        extirpation <- c(1,1,1,2,2,2,3,3,3),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=2, include.jumps=TRUE
+                                            , separate.extirpation=TRUE, make.null=TRUE) 
+    ),
+    list(
+        ## Model 34. Character effect on diversification, with a hidden state
+        speciation <- c(1,2,3,4,5,6),
+        extirpation <- c(1,2,3,4,5,6),
+        trans.rate <- trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=1, include.jumps=TRUE
+                                                        , separate.extirpation=TRUE)
+    ),
+    list(
+        ## Model 35. No character effect on diversification, multiple shifts
+        speciation <- c(rep(1,3), rep(2,3), rep(3,3), rep(4,3), rep(5,3)),
+        extirpation <- c(rep(1,3), rep(2,3), rep(3,3), rep(4,3), rep(5,3)),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=4, include.jumps=TRUE,
+                                            separate.extirpation=TRUE, make.null=TRUE) 
+    ),
+    list(
+        ## Model 36. No character effect on diversification, multiple shifts.
+        speciation <- c(rep(1,3), rep(2,3)),
+        extirpation <- c(rep(1,3), rep(2,3)),
+        trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=1, include.jumps=TRUE, 
+                                            separate.extirpation=TRUE, make.null=TRUE)
+    )
+)
 
-## Model 34. Character effect on diversification, with a hidden state
-speciation <- c(1,2,3,4,5,6)
-extirpation <- c(1,2,3,4,5,6)
-trans.rate <- trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=1, include.jumps=TRUE
-                                                  , separate.extirpation=TRUE)
-mod34 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                  hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=FALSE)
+quickFunc <- function(par_list, dat, phy){
+  hidden <- ifelse(dim(par_list[[3]])[1]>3, TRUE, FALSE) 
+  res <- GeoHiSSE(phy, dat, f=sf, turnover=par_list[[1]], eps=par_list[[2]], hidden.states=hidden, trans.rate=par_list[[3]], assume.cladogenetic=FALSE)
+  return(res)
+}
 
-## Model 35. No character effect on diversification, multiple shifts
-speciation <- c(rep(1,3), rep(2,3), rep(3,3), rep(4,3), rep(5,3))
-extirpation <- c(rep(1,3), rep(2,3), rep(3,3), rep(4,3), rep(5,3))
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=4, include.jumps=TRUE,
-                                    separate.extirpation=TRUE, make.null=TRUE) 
-mod35 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation,
-                  hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=FALSE) 
-
-## Model 36. No character effect on diversification, multiple shifts.
-speciation <- c(rep(1,3), rep(2,3))
-extirpation <- c(rep(1,3), rep(2,3))
-trans.rate <- TransMatMakerGeoHiSSE(hidden.areas=1, include.jumps=TRUE, 
-                                    separate.extirpation=TRUE, make.null=TRUE)
-mod36 <- GeoHiSSE(phy, dat, f=sf, speciation=speciation, extirpation=extirpation
-                  , hidden.areas=TRUE, trans.rate=trans.rate, assume.cladogenetic=FALSE)
-
+for(i in seq_len(length(pilot_states))){
+  dat <- pilot_states[[i]]
+  phy <- pilot_trees[[i]]
+  res <- mclapply(model_set, function(x) quickFunc(x, dat, phy), mc.cores=36)
+  save(res, file=paste0("pilot_results/pilot_results_", names(pilot_trees)[i], ".RData"))
+}
 
 ##########################################################################################
 ############################## aics ######################################################
