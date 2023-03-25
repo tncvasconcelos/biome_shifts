@@ -404,51 +404,6 @@ for(i in seq_len(length(pilot_states))){
 }
 
 ##########################################################################################
-############################## aics ######################################################
-##########################################################################################
-
-##### extracting aics #######
-list.geohisse <- list(model1 = mod1, 
-                      model2 = mod2, 
-                      model3 = mod3, 
-                      model4 = mod4, 
-                      model5 = mod5,
-                      model6 = mod6, 
-                      model7 = mod7, 
-                      model8 = mod8, 
-                      model9 = mod9, 
-                      model10 = mod10, 
-                      model11 = mod11, 
-                      model12 = mod12, 
-                      model13 = mod13,
-                      model14 = mod14, 
-                      model15 = mod15, 
-                      model16 = mod16, 
-                      model17 = mod17,
-                      model18 = mod18, 
-                      model19 = mod19, 
-                      model20 = mod20, 
-                      model21 = mod21, 
-                      model22 = mod22, 
-                      model23 = mod23,
-                      model24 = mod24,
-                      model25 = mod25, 
-                      model26 = mod26, 
-                      model27 = mod27, 
-                      model28 = mod28, 
-                      model29 = mod29, 
-                      model30 = mod30, 
-                      model31 = mod31,
-                      model32 = mod32, 
-                      model33 = mod33, 
-                      model34 = mod34, 
-                      model35 = mod35,
-                      model36 = mod36) 
-
-
-saveRDS(list.geohisse, file=paste(group, "GeoHiSSE.models", ".RData", sep="_"))
-
-##########################################################################################
 ############################## recons ####################################################
 ##########################################################################################
 
