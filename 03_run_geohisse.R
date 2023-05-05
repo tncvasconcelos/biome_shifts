@@ -1,5 +1,5 @@
 # rm(list=ls())
-setwd("~/biome_shifts/")
+setwd("~/Desktop/biome_shifts")
 
 library(ape)
 

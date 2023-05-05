@@ -44,3 +44,5 @@ vignettes/*.pdf
 # 
 1_thinned_points/
 .DS_Store
+gbif_data/
+wcvp/
