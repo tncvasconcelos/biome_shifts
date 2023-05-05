@@ -8,28 +8,28 @@ resolve.names <- function(names_to_solve) {
     }
     return(tmp.name)
   }
-  all_names <- pbapply::pblapply(names_to_solve, gnr_resolve_x, cl=90)
+  all_names <- pbapply::pblapply(names_to_solve, gnr_resolve_x, cl=50)
   return(as.character(all_names))
 }
 
 species_list <- readRDS("species_list.Rdata")
 
 taxized_names <- resolve.names(species_list[1:100000]) # This function adjust the names to the GBIF taxonomic backbone
-reference_table <- data.frame(wcvp_name = species_list, gbif_name = taxized_names) # you will need this table later
+reference_table <- data.frame(wcvp_name = species_list[1:100000], gbif_name = taxized_names) # you will need this table later
 write.csv(reference_table, file="reference_table1.csv", row.names = F) # saving table that you will need later
 
 taxized_names <- resolve.names(species_list[100001:200000]) # This function adjust the names to the GBIF taxonomic backbone
-reference_table <- data.frame(wcvp_name = species_list, gbif_name = taxized_names) # you will need this table later
+reference_table <- data.frame(wcvp_name = species_list[100001:200000], gbif_name = taxized_names) # you will need this table later
 write.csv(reference_table, file="reference_table2.csv", row.names = F) # saving table that you will need later
 
 taxized_names <- resolve.names(species_list[200001:300000]) # This function adjust the names to the GBIF taxonomic backbone
-reference_table <- data.frame(wcvp_name = species_list, gbif_name = taxized_names) # you will need this table later
+reference_table <- data.frame(wcvp_name = species_list[200001:300000], gbif_name = taxized_names) # you will need this table later
 write.csv(reference_table, file="reference_table3.csv", row.names = F) # saving table that you will need later
 
 taxized_names <- resolve.names(species_list[300000:400000]) # This function adjust the names to the GBIF taxonomic backbone
-reference_table <- data.frame(wcvp_name = species_list, gbif_name = taxized_names) # you will need this table later
+reference_table <- data.frame(wcvp_name = species_list[300000:400000], gbif_name = taxized_names) # you will need this table later
 write.csv(reference_table, file="reference_table4.csv", row.names = F) # saving table that you will need later
 
 taxized_names <- resolve.names(species_list[400000:length(species_list)]) # This function adjust the names to the GBIF taxonomic backbone
-reference_table <- data.frame(wcvp_name = species_list, gbif_name = taxized_names) # you will need this table later
+reference_table <- data.frame(wcvp_name = species_list[400000:length(species_list)], gbif_name = taxized_names) # you will need this table later
 write.csv(reference_table, file="reference_table5.csv", row.names = F) # saving table that you will need later
