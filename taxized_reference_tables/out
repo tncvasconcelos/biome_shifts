@@ -1,0 +1,3 @@
+Warning message:
+In parallel::mclapply(X, FUN, ..., mc.cores = as.integer(cl), mc.silent = TRUE) :
+  scheduled cores 23, 9, 14, 22 encountered errors in user code, all values of the jobs will be affected
