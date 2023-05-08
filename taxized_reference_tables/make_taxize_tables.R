@@ -8,13 +8,13 @@ resolve.names <- function(names_to_solve) {
     }
     return(tmp.name)
   }
-  all_names <- pbapply::pblapply(names_to_solve, gnr_resolve_x, cl=50)
+  all_names <- parallel::mclapply(names_to_solve, gnr_resolve_x, mc.cores=6)
   return(as.character(all_names))
 }
 
 species_list <- readRDS("species_list.Rdata")
 
-taxized_names <- resolve.names(species_list[1:100000]) # This function adjust the names to the GBIF taxonomic backbone
+taxized_names <- resolve.names(species_list[1:1000]) # This function adjust the names to the GBIF taxonomic backbone
 reference_table <- data.frame(wcvp_name = species_list[1:100000], gbif_name = taxized_names) # you will need this table later
 write.csv(reference_table, file="reference_table1.csv", row.names = F) # saving table that you will need later
 
