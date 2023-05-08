@@ -11,6 +11,18 @@ library(rexpokit)
 library(cladoRcpp)
 library(BioGeoBEARS)
 
+resolve.names <- function(names_to_solve) {
+  gnr_resolve_x <- function(x) {
+    sources <- taxize::gnr_datasources()
+    tmp.name <- suppressWarnings(taxize::gnr_resolve(names=x, data_source_ids=sources$id[sources$title == "GBIF Backbone Taxonomy"], best_match_only=TRUE)$matched_name)
+    if(is.null(tmp.name)) {
+      tmp.name <- paste0(x,"_UNMATCHED")
+    }
+    return(tmp.name)
+  }
+  all_names <- pbapply::pblapply(names_to_solve, gnr_resolve_x, cl=6)
+  return(as.character(all_names))
+}
 
 load.trees <- function(tree.dir) {
   tree_files <- list.files(tree.dir, full.names = T)
