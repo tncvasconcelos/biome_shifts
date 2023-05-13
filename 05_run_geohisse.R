@@ -47,19 +47,20 @@ for (group_index in 1:length(focal_clades)) {
   # Preparing data - areas have to be as 0 (11 - widespread), 
   # 1 (10, endemic of first area) 
   # and 2 (01, endemic of second area)
-  
-  areas <- as.data.frame(rep(1, nrow(dist)))
-  dist <- cbind(dist, areas)
-  colnames(dist)[7] <- "area"
+  dist <- as.data.frame(dist)
+  dist$area <- 0
+#   areas <- as.data.frame(rep(1, nrow(dist)))
+#   dist <- cbind(dist, areas)
+#   colnames(dist)[7] <- "area"
   
   for (i in 1:length(dist$area)){
-    if (dist[i, "closed_canopy"] <= 0.6 & dist[i, "closed_canopy"] >= 0.4){
+    if (dist[i, "area_open"] == 1 & dist[i, "area_closed"] == 1){
       dist[i, "area"] = 0 
     }
-    if (dist[i, "closed_canopy"] > 0.6){
+    if (dist[i, "area_open"] == 0 & dist[i, "area_closed"] == 1){
       dist[i, "area"] = 1
     }
-    if (dist[i, "closed_canopy"] < 0.4){
+    if (dist[i, "area_open"] == 1 & dist[i, "area_closed"] == 0){
       dist[i, "area"] = 2
     }
   }
