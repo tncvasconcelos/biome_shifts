@@ -401,18 +401,17 @@ model_set <- list(
 
 par_list =model_set[[1]]
 
-quickFunc <- function(par_list, dat, phy){
+quickFunc <- function(par_list, dat, phy, sf){
   hidden <- ifelse(dim(par_list[[3]])[1]>3, TRUE, FALSE) 
-  res <- GeoHiSSE(phy = phy, data = dat, f=sf, turnover=par_list[[1]], eps=par_list[[2]], hidden.states=hidden, trans.rate=par_list[[3]], assume.cladogenetic=FALSE)
+  f <- rep(sf, 3)
+  res <- GeoHiSSE(phy = phy, data = dat, f=f, turnover=par_list[[1]], eps=par_list[[2]], hidden.states=hidden, trans.rate=par_list[[3]], assume.cladogenetic=FALSE)
   return(res)
 }
-
-sort(dat$species)[1]
-sort(phy$tip.label)[1]
 
 for(i in seq_len(length(state_list))){
   dat <- state_list[[i]]
   phy <- all_trees[[i]]
-  res <- mclapply(model_set, function(x) quickFunc(x, dat, phy), mc.cores=36)
-  save(res, file=paste0("05_results/results_", names(all_trees)[i], ".RData"))
+  sf <- updated_sfs[i]
+  res <- mclapply(model_set, function(x) quickFunc(x, dat, phy, sf), mc.cores=36)
+  save(res, file=paste0("5_results/results_", names(all_trees)[i], ".RData"))
 }
