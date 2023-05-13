@@ -1,27 +1,28 @@
 # rm(list=ls())
-setwd("~/Desktop/biome_shifts")
+setwd("~/biome_shifts")
 
 library(ape)
+library(hisse)
+library(parallel)
 
-# Load trees
-all_trees_files <- list.files("4_organized_trees_geohisse/")
-all_trees <- lapply(paste0("4_organized_trees_geohisse/",all_trees_files), read.tree)
-names(all_trees) <- gsub(".tre","",all_trees_files)
+    # Load trees
+    all_trees_files <- list.files("4_organized_trees_geohisse/")
+    all_trees <- list()
+    for(i in 1:length(all_trees_files)){
+        load(paste0("4_organized_trees_geohisse/",all_trees_files[i]))
+        pruned_tree$tip.label <- gsub(" ","_",pruned_tree$tip.label)
+        all_trees[[i]] <- pruned_tree
+        names(all_trees)[i] <- gsub(".Rsave","",all_trees_files[i])
+    }
 
 # Load datasets
 all_area_files <- list.files("3_organized_datasets_geohisse/")
-all_areas <- lapply(paste0("3_organized_datasets_geohisse/",all_area_files), read.csv)
-names(all_areas) <- gsub("_area_score.csv","",all_area_files)
-
-# I still have to double check a lot of these because it looks like we lost a lot of data
-# when filtering the points. Let's start with the following trees for a test:
-
-pilot <- c("Acacia-Renner_et_al-2019","Lamiales-Fonseca-2021","Poaceae-Spriggs_et_al-2014",
-"Carex-MartinBravo_et_al-2019" ,"Onagraceae-Freyman_&_Hohna-2018","Quercus-Hipp_et_al-2017",
-"Viburnum-Landis_et_al-2021")
-
-pilot_areas <- all_areas[pilot]
-pilot_trees <- all_trees[pilot]
+all_areas <- list()
+for(i in 1:length(all_area_files)){
+    load(paste0("3_organized_datasets_geohisse/",all_area_files[i]))
+    all_areas[[i]] <-  habitats_subset
+    names(all_areas)[i] <- gsub("_area_score.Rsave","",all_area_files[i])
+}
 
 
 #### GeoHiSSE code ####
@@ -34,12 +35,13 @@ pilot_trees <- all_trees[pilot]
 library(hisse)
 library(parallel)
 
+focal_clades <- gsub(".Rsave","",all_trees_files)
 ### Import data
-pilot_states <- list()
-for (group_index in 1:length(pilot_trees)) {
-  group = names(pilot_areas)[group_index] # name the group
-  tree <- pilot_trees[[group_index]] # load tree file 
-  dist <- pilot_areas[[group_index]] # load distribution file 
+state_list <- list()
+for (group_index in 1:length(focal_clades)) {
+  group = names(all_areas)[group_index] # name the group
+  tree <- all_trees[[group_index]] # load tree file 
+  dist <- all_areas[[group_index]] # load distribution file 
   
   # Preparing data - areas have to be as 0 (11 - widespread), 
   # 1 (10, endemic of first area) 
@@ -50,18 +52,18 @@ for (group_index in 1:length(pilot_trees)) {
   colnames(dist)[7] <- "area"
   
   for (i in 1:length(dist$area)){
-    if (dist[i, "area_open"] == 1 && dist[i, "area_closed"]  == 1){
+    if (dist[i, "closed_canopy"] <= 0.6 & dist[i, "closed_canopy"] >= 0.4){
       dist[i, "area"] = 0 
     }
-    if (dist[i, "area_open"] == 0 && dist[i, "area_closed"]  == 1){
+    if (dist[i, "closed_canopy"] > 0.6){
       dist[i, "area"] = 1
     }
-    if (dist[i, "area_open"] == 1 && dist[i, "area_closed"]  == 0){
+    if (dist[i, "closed_canopy"] < 0.4){
       dist[i, "area"] = 2
     }
   }
-  pilot_states[[group_index]]<-dist[,c("species", "area")]
-  names(pilot_states)[group_index] <- group
+  state_list[[group_index]]<-dist[,c("species", "area")]
+  names(state_list)[group_index] <- group
 }
 
 #table(states$area) # check if species-richness in each range make sense
@@ -72,13 +74,6 @@ for (group_index in 1:length(pilot_trees)) {
 
 # Load sampling fraction for the group
 sf<-c(1,1,1) # e.g. if it's fully sampled 
-
-#
-
-# For each run, we will use one pilot_tree and the equivalent pilot_states
-
-phy=tree
-dat=states
 
 # We used the same 18 models of Caetano et al. (2018) (plus a second set of models including jump dispersal) - see their original publication for more information
 
@@ -390,16 +385,20 @@ model_set <- list(
     )
 )
 
+par_list =model_set[[1]]
+
 quickFunc <- function(par_list, dat, phy){
   hidden <- ifelse(dim(par_list[[3]])[1]>3, TRUE, FALSE) 
-  res <- GeoHiSSE(phy, dat, f=sf, turnover=par_list[[1]], eps=par_list[[2]], hidden.states=hidden, trans.rate=par_list[[3]], assume.cladogenetic=FALSE)
+  res <- GeoHiSSE(phy = phy, data = dat, f=sf, turnover=par_list[[1]], eps=par_list[[2]], hidden.states=hidden, trans.rate=par_list[[3]], assume.cladogenetic=FALSE)
   return(res)
 }
 
-for(i in seq_len(length(pilot_states))){
-  dat <- pilot_states[[i]]
-  phy <- pilot_trees[[i]]
-  res <- mclapply(model_set, function(x) quickFunc(x, dat, phy), mc.cores=36)
-  save(res, file=paste0("pilot_results/pilot_results_", names(pilot_trees)[i], ".RData"))
-}
+sort(dat$species)[1]
+sort(phy$tip.label)[1]
 
+for(i in seq_len(length(state_list))){
+  dat <- state_list[[i]]
+  phy <- all_trees[[i]]
+  res <- mclapply(model_set, function(x) quickFunc(x, dat, phy), mc.cores=36)
+  save(res, file=paste0("05_results/results_", names(all_trees)[i], ".RData"))
+}
