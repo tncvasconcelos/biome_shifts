@@ -38,6 +38,7 @@ library(parallel)
 focal_clades <- gsub(".Rsave","",all_trees_files)
 ### Import data
 state_list <- list()
+
 for (group_index in 1:length(focal_clades)) {
   group = names(all_areas)[group_index] # name the group
   tree <- all_trees[[group_index]] # load tree file 
@@ -68,12 +69,24 @@ for (group_index in 1:length(focal_clades)) {
 
 #table(states$area) # check if species-richness in each range make sense
 
-# 2 - cr "endemic"
-# 1 - non-cr "endemic"
+# 2 - open-canopy "endemic"
+# 1 - closed-canopy "endemic"
 # 0 - widespread
 
 # Load sampling fraction for the group
-sf<-c(1,1,1) # e.g. if it's fully sampled 
+# sf<-c(1,1,1) # e.g. if it's fully sampled 
+
+ref_table <- read.csv("all_trees_used.csv")
+# recalculating sfs
+updated_sfs <- c()
+for(group_index in 1:length(all_trees)) {
+  tree <- all_trees[[group_index]] # load tree file 
+  one_sf <- ref_table$sf_ingroup[which(ref_table$label==names(all_trees)[group_index])]
+  n_tips_full <- ref_table$n_tips_ingroup[which(ref_table$label==names(all_trees)[group_index])]
+  n_tips_now <- Ntip(tree)
+  updated_sfs[group_index] <- round((n_tips_now*one_sf)/n_tips_full, 2)
+  names(updated_sfs)[group_index] <- names(all_trees)[group_index]
+}
 
 # We used the same 18 models of Caetano et al. (2018) (plus a second set of models including jump dispersal) - see their original publication for more information
 

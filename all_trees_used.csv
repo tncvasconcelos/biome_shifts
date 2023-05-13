@@ -48,6 +48,6 @@ Bignonieae-Lohmann_et_al-2012,Bignonieae,Lohmann_et_al,2012,10.1111/j.1095-8339.
 Vrieseinae-Kessous_et_al-2020,Vrieseinae,Kessous_et_al,2020,10.1093/botlinnean/boz038,Bromeliaceae,monocots,103,0.37,paper,bayes,contacted_author,authorization_needed,yes
 Cyclanthaceae-Leal_et_al-in_review,Cyclanthaceae,Leal_et_al,in_review,NA,Cyclanthaceae,monocots,103,0.45,paper,bayes,contacted_author,,yes
 Bombacoideae-Zizka_et_al-2020,Bombacoideae,Zizka_et_al,2020,10.1111/jbi.13815,Malvaceae,rosids,103,0.59,paper,bayes,zenodo,Bombac_080917_MCC,yes
-Viburnum-Landis_et_al-2021,Viburnum,Landis_et_al,2021,10.1093/sysbio/syaa027,,asterids,,1,,,,,
-Arecaceae-Onstein_et_al-2018,Arecaceae,Onstein_et_al,2018,10.1098/rspb.2018.0882,,monocots,,1,,,,,
-Myrteae_NMWG_in_prep,Myrteae,NMWG,in_prep,,Myrtaceae,,,,,,,,
+Viburnum-Landis_et_al-2021,Viburnum,Landis_et_al,2021,10.1093/sysbio/syaa027,,asterids,163,1,,,,,
+Arecaceae-Onstein_et_al-2018,Arecaceae,Onstein_et_al,2018,10.1098/rspb.2018.0882,,monocots,2539,1,,,,,
+Myrteae_NMWG_in_prep,Myrteae,NMWG,in_prep,,Myrtaceae,,860,0.34,,,,,
