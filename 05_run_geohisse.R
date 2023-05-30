@@ -5,15 +5,15 @@ library(ape)
 library(hisse)
 library(parallel)
 
-    # Load trees
-    all_trees_files <- list.files("4_organized_trees_geohisse/")
-    all_trees <- list()
-    for(i in 1:length(all_trees_files)){
-        load(paste0("4_organized_trees_geohisse/",all_trees_files[i]))
-        pruned_tree$tip.label <- gsub(" ","_",pruned_tree$tip.label)
-        all_trees[[i]] <- pruned_tree
-        names(all_trees)[i] <- gsub(".Rsave","",all_trees_files[i])
-    }
+# Load trees
+all_trees_files <- list.files("4_organized_trees_geohisse/")
+all_trees <- list()
+for(i in 1:length(all_trees_files)){
+    load(paste0("4_organized_trees_geohisse/",all_trees_files[i]))
+    pruned_tree$tip.label <- gsub(" ","_",pruned_tree$tip.label)
+    all_trees[[i]] <- pruned_tree
+    names(all_trees)[i] <- gsub(".Rsave","",all_trees_files[i])
+}
 
 # Load datasets
 all_area_files <- list.files("3_organized_datasets_geohisse/")
@@ -66,6 +66,10 @@ for (group_index in 1:length(focal_clades)) {
   }
   state_list[[group_index]]<-dist[,c("species", "area")]
   names(state_list)[group_index] <- group
+  # in the dataframe and tree
+  included_species <- intersect(state_list[[group_index]][,1], tree$tip.label)
+  state_list[[group_index]] <- state_list[[group_index]][match(state_list[[group_index]][,1], included_species), ]
+  
 }
 
 #table(states$area) # check if species-richness in each range make sense
@@ -190,7 +194,7 @@ model_set <- list(
     ),
     list(
         ## Model 9. Heterogeneous diversification, not tied to range evolution.
-        ## Assumes three distinct diversification rates.
+        ## Assumes three distinct diversification rates.z
         speciation <- c(1,1,1,2,2,2,3,3,3),
         extirpation <- c(1,1,2,2,3,3),
         trans.rate <- TransMatMakerGeoHiSSE(hidden.traits=2, make.null=TRUE,include.jumps=FALSE,
@@ -412,6 +416,7 @@ for(i in seq_len(length(state_list))){
   dat <- state_list[[i]]
   phy <- all_trees[[i]]
   sf <- updated_sfs[i]
+  quickFunc(model_set[[1]], dat, phy, sf)
   res <- mclapply(model_set, function(x) quickFunc(x, dat, phy, sf), mc.cores=36)
   save(res, file=paste0("5_results/results_", names(all_trees)[i], ".RData"))
 }
