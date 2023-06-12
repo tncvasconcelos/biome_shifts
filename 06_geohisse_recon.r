@@ -24,7 +24,7 @@ individual_recon <- function(model_res){
 for(i in 1:length(to_load)){
         load(to_load[i])
         recon <- mclapply(res, individual_recon, mc.cores=26)
-        file_name <- gsub("5_results/", "6_recon/", to_load[i])
+        file_name <- gsub("5_results/", "6_recons/", to_load[i])
         file_name <- gsub("results_", "recon_", file_name)
         save(recon, file=file_name)
 }

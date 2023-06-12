@@ -7,16 +7,16 @@ library(parallel)
 require(dplyr)
 
 # finished model sets for particular datsets
-clades <- dir("pilot_results/") %>% gsub("pilot_results_", "", .) %>% gsub("recon_", "", .) %>% gsub(".RData", "", .) %>% unique(.)
-to_load_recon <- dir("pilot_results/", full.names = TRUE)[grep("recon_", dir("pilot_results/"))]
-to_load_results <- dir("pilot_results/", full.names = TRUE)[-grep("recon_", dir("pilot_results/"))]
+clades <- dir("5_results/") %>% gsub("results_", "", .) %>% gsub(".RData", "", .) %>% unique(.)
+to_load_recon <- dir("6_recons/", full.names = TRUE)
+to_load_results <- dir("5_results/", full.names = TRUE)
 
 # function for pulling out AIC and stuff like that
 getModelRes <- function(model_res){
   if(class(model_res)[1] == "try-error"){
-      out <- c(lnLik=NA, k=NA, AIC=NA)
+    out <- c(lnLik=NA, k=NA, AIC=NA)
   }else{
-      out <- c(lnLik=model_res$loglik, k=max(model_res$index.par, na.rm=TRUE), AIC=model_res$AIC)
+    out <- c(lnLik=model_res$loglik, k=max(model_res$index.par, na.rm=TRUE), AIC=model_res$AIC)
   }
   return(out)
 }
