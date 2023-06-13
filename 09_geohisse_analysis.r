@@ -147,14 +147,25 @@ get_model_avg_params <- function(full_result, return_summ = FALSE){
 # and 2 (01, endemic of second area)
 
 # png("figures/pilot_turnover_rate.png", width = 1000, height = 1000)
-par(mfrow=c(7,1))
-for(i in 1:7){
+# par(mfrow=c(7,1))
+for(i in 1:length(clades)){
   full_result <- get_full_clade_result(clades[i], to_load_results, to_load_recon)
+  if(all(is.na(full_result$model_table))){
+    next
+  }
   dat <- full_result$res[[1]]$data[,2]+1
+  phy <- full_result$res[[1]]$phy
   tip_correlations <- get_model_avg_params(full_result, return_summ = FALSE)
+  rownames(tip_correlations) <- full_result$res[[1]]$data[,1]
   # hist(tip_correlations$tip_avg_turn, xlab = "Average turnover", main = clades[i], col = dat)
   # hist(tip_correlations$tip_avg_rate, xlab = "Average rate", main = clades[i], col = dat)
-  plot(x = tip_correlations$tip_avg_rate, y = tip_correlations$tip_avg_turn, xlab = "Average rate", ylab = "Average turnover", main = clades[i], pch = 16, col = dat)
-  abline(lm(tip_correlations$tip_avg_turn ~ tip_correlations$tip_avg_rate), col = "red")
+  res_plm <- phylolm::phylolm(tip_avg_turn ~ tip_avg_rate, data = tip_correlations, phy = phy)
+  sig <- summary(res_plm)
+  to_add <- ifelse(sig$coefficients[2,4] < 0.05, "*", "")
+  png(paste0("plots/plot_", clades[i], ".png"))
+  plot(x = tip_correlations$tip_avg_rate, y = tip_correlations$tip_avg_turn, xlab = "Average rate", ylab = "Average turnover", main = paste0(clades[i], " ", to_add), pch = 16, col = dat)
+  # res_lm <- lm(tip_correlations$tip_avg_turn ~ tip_correlations$tip_avg_rate)
+  abline(res_plm, col = "red")
+  dev.off()
 }
 # dev.off()

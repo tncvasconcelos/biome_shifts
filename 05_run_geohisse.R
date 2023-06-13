@@ -404,6 +404,7 @@ model_set <- list(
     )
 )
 
+save(model_set, file = "model_set.rsave")
 par_list =model_set[[1]]
 
 quickFunc <- function(par_list, dat, phy, sf){
