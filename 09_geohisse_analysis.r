@@ -159,6 +159,7 @@ for(i in 1:length(clades)){
   rownames(tip_correlations) <- full_result$res[[1]]$data[,1]
   # hist(tip_correlations$tip_avg_turn, xlab = "Average turnover", main = clades[i], col = dat)
   # hist(tip_correlations$tip_avg_rate, xlab = "Average rate", main = clades[i], col = dat)
+  phy$root.edge <- NULL
   res_plm <- phylolm::phylolm(tip_avg_turn ~ tip_avg_rate, data = tip_correlations, phy = phy)
   sig <- summary(res_plm)
   to_add <- ifelse(sig$coefficients[2,4] < 0.05, "*", "")
