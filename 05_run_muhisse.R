@@ -107,16 +107,27 @@ trans_rate_2cd <- ParDrop(trans.rate, c(2,5,6,8,10,13,14,16))
 trans.rate <- TransMatMakerMuHiSSE(hidden.traits=1, make.null = TRUE)
 trans_rate_2cid <- ParDrop(trans.rate, c(2,5,6,8))
 
+trans_rate_2 <- list(trans_rate_2cid, trans_rate_2cd)
+
 index <- as.data.frame(rbind(index_1, index_2))
 index_list <- split(index, seq(nrow(index)))
 
 
 ref_table <- read.csv("all_trees_used.csv")
+# recalculating sfs
+updated_sfs <- c()
+for(group_index in 1:length(all_trees)) {
+  tree <- all_trees[[group_index]] # load tree file 
+  one_sf <- ref_table$sf_ingroup[which(ref_table$label==names(all_trees)[group_index])]
+  n_tips_full <- ref_table$n_tips_ingroup[which(ref_table$label==names(all_trees)[group_index])]
+  n_tips_now <- Ntip(tree)
+  updated_sfs[group_index] <- round((n_tips_now*one_sf)/n_tips_full, 2)
+  names(updated_sfs)[group_index] <- names(all_trees)[group_index]
+}
 
-index_row <- index_list[[1]]
-
+index_row <- index_list[[13]]
 # two rate model
-run_single_model <- function(dat, phy, sf, index_row, ef_1, ef_2, turn_1, turn_2, trans_rate_1, trans_rate_2cd, trans_rate_2cid){
+run_single_model <- function(dat, phy, sf, index_row, ef_1, ef_2, turn_1, turn_2, trans_rate_1, trans_rate_2){
   f = rep(sf, 4)
   if(index_row$Var4 == "1R"){
     # run single rate class model
@@ -128,24 +139,15 @@ run_single_model <- function(dat, phy, sf, index_row, ef_1, ef_2, turn_1, turn_2
                    trans.rate=trans_rate)
   }else{
     # run double rate class model
-    
+    ef <- ef_2[[index_row$Var1]]
+    turn <- turn_2[[index_row$Var2]]
+    trans_rate <- trans_rate_2[[index_row$Var3]]
+    out <- MuHiSSE(phy=phy, data=dat, f=f, turnover=turn,
+                   eps=ef, hidden.states=TRUE,
+                   trans.rate=trans_rate)
   }
+  return(out)
 }
-
-
-
-
-
-save(model_set, file = "model_set.rsave")
-par_list =model_set[[1]]
-
-quickFunc <- function(par_list, dat, phy, sf){
-  hidden <- ifelse(dim(par_list[[3]])[1]>3, TRUE, FALSE) 
-  f <- rep(sf, 3)
-  res <- GeoHiSSE(phy = phy, data = dat, f=f, turnover=par_list[[1]], eps=par_list[[2]], hidden.states=hidden, trans.rate=par_list[[3]], assume.cladogenetic=FALSE)
-  return(res)
-}
-
 # Preparing data - areas have to be as 0 (11 - widespread), 
 # 1 (10, endemic of first area) 
 # and 2 (01, endemic of second area
@@ -155,9 +157,8 @@ for(i in seq_len(length(state_list))){
   dat_muhisse[dat_muhisse[,2] == 0, 3] <- 1
   dat_muhisse[dat_muhisse[,2] == 1, c(2,3)] <- 0
   dat_muhisse[dat_muhisse[,2] == 2, c(2,3)] <- 1
-  dat <- dat_muhisse
   phy <- all_trees[[i]]
   sf <- updated_sfs[i]
-  res <- mclapply(model_set, function(x) quickFunc(x, dat, phy, sf), mc.cores=36)
+  res <- mclapply(index_list, function(x) run_single_model(dat_muhisse, phy, sf, x, ef_1, ef_2, turn_1, turn_2, trans_rate_1, trans_rate_2), mc.cores=36)
   save(res, file=paste0("5_results/results_", names(all_trees)[i], ".RData"))
 }
