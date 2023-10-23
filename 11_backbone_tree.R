@@ -120,7 +120,11 @@ for(i in 1:length(all_trees)){
   one_label <- names(all_trees)[i]
   one_tree_tip_labels <- all_trees[[i]]
   one_tree_tip_labels <- simplify.names.taxize(one_tree_tip_labels)
-  tips_to_keep_tmp <- which(big_tree$tip.label %in% one_tree_tip_labels)
+  if(one_label=="Lobelioideae-Lagomarsino_et_al-2017") {
+     tips_to_keep_tmp <-  grep("Lobelia", big_tree$tip.label)
+    } else {
+    tips_to_keep_tmp <- which(big_tree$tip.label %in% one_tree_tip_labels)
+  }
   big_tree$tip.label[tips_to_keep_tmp] <- one_label
   tips_to_keep <- c(tips_to_keep, tips_to_keep_tmp)
 }
@@ -128,7 +132,6 @@ for(i in 1:length(all_trees)){
 pruned_big_tree <- keep.tip(big_tree, tips_to_keep)
 pruned_big_tree$node.label <- NULL
 backbone_tree <- keep.tip(pruned_big_tree, which(!duplicated(pruned_big_tree$tip.label)))
-
 
 plot(ladderize(backbone_tree), cex=0.6)
 axisPhylo()
