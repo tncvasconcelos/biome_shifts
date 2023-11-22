@@ -162,3 +162,4 @@ for(i in seq_len(length(state_list))){
   res <- mclapply(index_list, function(x) run_single_model(dat_muhisse, phy, sf, x, ef_1, ef_2, turn_1, turn_2, trans_rate_1, trans_rate_2), mc.cores=36)
   save(res, file=paste0("5_results/results_", names(all_trees)[i], ".RData"))
 }
+
