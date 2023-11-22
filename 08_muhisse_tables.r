@@ -225,6 +225,9 @@ rownames(plot_data) <- gsub(" .*", "", plot_data$Group)
 plot_data$Group <- gsub(" .*", "", plot_data$Group)
 plot_data <- plot_data[match(phy_bb$tip.label, rownames(plot_data)),]
 
+head(plot_data[,-1])
+apply(plot_data[,-1], 2, median)
+
 plot_data_long <- pivot_longer(plot_data, cols = -Group) 
 
 fit_00 = phylolm(log10(turn_00) ~ log10(trans_00), data=plot_data, phy=phy_bb)
@@ -236,6 +239,12 @@ summary(fit_01)
 summary(fit_11)
 
 subset_data <- plot_data_long[grep("turn", plot_data_long$name),]
+
+phyl.pairedttest()
+
+phylANOVA(phy_bb, 
+          x = setNames(as.factor(subset_data$name), subset_data$Group), 
+          y = setNames(subset_data$value, subset_data$Group))
 
 a <- ggplot(subset_data, aes(x = name, y = log10(value), fill = name)) +
   geom_violin() +
@@ -330,12 +339,19 @@ rownames(plot_data) <- gsub(" .*", "", plot_data$Group)
 plot_data$Group <- gsub(" .*", "", plot_data$Group)
 plot_data <- plot_data[match(phy_bb$tip.label, rownames(plot_data)),]
 
-plot_data_long <- pivot_longer(plot_data, cols = -Group) 
+colMeans(log10(plot_data[,-1]))
+plot_data_combined <- ((plot_data[,2:5]) + (plot_data[,6:9]))/2
+plot_data_combined$Group <- rownames(plot_data_combined)
+apply((plot_data_combined[,-5]), 2, median)
 
-a <- ggplot(plot_data_long, aes(x = name, y = log10(value), fill = name)) +
-  geom_violin() +
+plot_data_long <- pivot_longer(plot_data_combined, cols = -Group) 
+
+ggplot(plot_data_long, aes(x = name, y = log10(value), fill = name)) +
+  geom_boxplot() +
   ggtitle("a) comparison of observed state transition rates") +
-  theme_minimal()
+  theme_minimal() +
+  coord_cartesian(ylim = c(-2, 2))
+  
 
 b <- ggplot(plot_data, aes(x = log10(trans_00), y = log10(turn_00))) +
   geom_point(aes(color = rownames(plot_data)), size = 3) +

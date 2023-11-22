@@ -151,6 +151,8 @@ run_single_model <- function(dat, phy, sf, index_row, ef_1, ef_2, turn_1, turn_2
 # Preparing data - areas have to be as 0 (11 - widespread), 
 # 1 (10, endemic of first area) 
 # and 2 (01, endemic of second area
+# we change the data to be:
+# 
 for(i in seq_len(length(state_list))){
   dat <- state_list[[i]]
   dat_muhisse <- cbind(dat, dat[,2])
