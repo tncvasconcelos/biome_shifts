@@ -382,5 +382,55 @@ evaluate_difference <- function(model_list, type = "rate_class"){
       out <- rbind(out, trans_rates)
     }
   }
+  if(type == "all"){
+    for(i in 1:dim(model_table)[1]){
+      if(length(par_list[[i]]$turnover) == 4){ #single rate class
+        focal_mat <- par_list[[i]]$trans_matrix
+        trans_rates <- c(f00_t01_a = focal_mat[1,2], 
+                         f01_t00_a = focal_mat[2,1],
+                         f01_t11_a = focal_mat[2,4],
+                         f11_t01_a = focal_mat[4,2],
+                         f00_t01_b = focal_mat[1,2], 
+                         f01_t00_b = focal_mat[2,1],
+                         f01_t11_b = focal_mat[2,4],
+                         f11_t01_b = focal_mat[4,2])
+        turns <- c(tn_00_a = par_list[[i]]$turnover[1],
+                   tn_01_a = par_list[[i]]$turnover[2],
+                   tn_11_a = par_list[[i]]$turnover[4],
+                   tn_00_b = par_list[[i]]$turnover[1],
+                   tn_01_b = par_list[[i]]$turnover[2],
+                   tn_11_b = par_list[[i]]$turnover[4])
+        ef <- c(ef_00_a = par_list[[i]]$eps[1], 
+                ef_01_a = par_list[[i]]$eps[2],
+                ef_11_a = par_list[[i]]$eps[4],
+                ef_00_b = par_list[[i]]$eps[1], 
+                ef_01_b = par_list[[i]]$eps[2],
+                ef_11_b = par_list[[i]]$eps[4])
+      }else{ # hidden states
+        focal_mat <- par_list[[i]]$trans_matrix
+        trans_rates <- c(f00_t01_a = focal_mat[1,2], 
+                         f01_t00_a = focal_mat[2,1],
+                         f01_t11_a = focal_mat[2,4],
+                         f11_t01_a = focal_mat[4,2],
+                         f00_t01_b = focal_mat[5,6], 
+                         f01_t00_b = focal_mat[6,5],
+                         f01_t11_b = focal_mat[6,8],
+                         f11_t01_b = focal_mat[8,6])
+        turns <- c(tn_00_a = par_list[[i]]$turnover[1],
+                   tn_01_a = par_list[[i]]$turnover[2],
+                   tn_11_a = par_list[[i]]$turnover[4],
+                   tn_00_b = par_list[[i]]$turnover[5],
+                   tn_01_b = par_list[[i]]$turnover[6],
+                   tn_11_b = par_list[[i]]$turnover[8])
+        ef <- c(ef_00_a = par_list[[i]]$eps[1], 
+                ef_01_a = par_list[[i]]$eps[2],
+                ef_11_a = par_list[[i]]$eps[4],
+                ef_00_b = par_list[[i]]$eps[5], 
+                ef_01_b = par_list[[i]]$eps[6],
+                ef_11_b = par_list[[i]]$eps[8])
+      }
+      out <- rbind(out, c(trans_rates,turns,ef))
+    }
+  }
   return(colSums(out * model_table$AICwt))
 }

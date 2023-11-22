@@ -239,12 +239,22 @@ summary(fit_01)
 summary(fit_11)
 
 subset_data <- plot_data_long[grep("turn", plot_data_long$name),]
+subset_data$value <- log10(subset_data$value)
 
-phyl.pairedttest()
+ind_01 <- subset_data$name == "turn_01"
+ind_11 <- subset_data$name == "turn_11"
+ind_00 <- subset_data$name == "turn_00"
 
-phylANOVA(phy_bb, 
-          x = setNames(as.factor(subset_data$name), subset_data$Group), 
-          y = setNames(subset_data$value, subset_data$Group))
+ttest_01_00 <- phyl.pairedttest(phy_bb, 
+                                x1 = setNames(subset_data$value[ind_01], subset_data$Group[ind_01]),
+                                x2 = setNames(subset_data$value[ind_00], subset_data$Group[ind_00]))
+ttest_01_11 <- phyl.pairedttest(phy_bb, 
+                                x1 = setNames(subset_data$value[ind_01], subset_data$Group[ind_01]),
+                                x2 = setNames(subset_data$value[ind_11], subset_data$Group[ind_11]))
+ttest_00_11 <- phyl.pairedttest(phy_bb, 
+                                x1 = setNames(subset_data$value[ind_00], subset_data$Group[ind_00]),
+                                x2 = setNames(subset_data$value[ind_11], subset_data$Group[ind_11]))
+
 
 a <- ggplot(subset_data, aes(x = name, y = log10(value), fill = name)) +
   geom_violin() +
@@ -555,3 +565,20 @@ ggplot(subset_data, aes(x = name, y = (value), fill = name)) +
   ggtitle("a) comparison of observed state diversification rates") +
   theme_minimal() + 
   coord_cartesian(ylim = c(-2,2))
+
+
+##############################
+### EXAMINING ALL parameters
+##############################
+
+# plot data for heterogenous clades
+plot_data_het <- cbind(Group = both_differ_clade_names, as.data.frame(do.call(rbind, lapply(both_differ_model_list, function(x) evaluate_difference(x, type = "all")))))
+plot_data_het <- as.data.frame(plot_data_het)
+
+# plot data for all clades
+plot_data_all <- cbind(Group = clade_names, as.data.frame(do.call(rbind, lapply(all_model_list, function(x) evaluate_difference(x, type = "all")))))
+plot_data_all <- as.data.frame(plot_data_all)
+
+plot_data <- plot_data_all
+
+head(plot_data)
