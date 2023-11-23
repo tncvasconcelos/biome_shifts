@@ -12,6 +12,8 @@ library(tidyr)
 library(ggtree)
 library(phylolm)
 require(aplot)
+library(gridExtra)
+library(ggplotify)
 
 ##############################
 ### MODEL SUPPORT GENERALLY 
@@ -100,10 +102,16 @@ ggsave("plots/08_aic_support_plot.pdf", ab)
 both_differ_model_list <- all_model_list[result_matrix$both_differ > 0.5]
 both_differ_clade_names <- clade_names[result_matrix$both_differ > 0.5]
 both_differ_model_table <- lapply(both_differ_model_list, get_model_table)
-
-# plot data for heterogenous clades
 plot_data_het <- cbind(Group = both_differ_clade_names, as.data.frame(do.call(rbind, lapply(both_differ_model_list, evaluate_difference))))
 plot_data_het <- as.data.frame(plot_data_het)
+
+# big clades
+big_model_list <- all_model_list[n_tips > 100]
+big_clade_names <- clade_names[n_tips > 100]
+big_model_table <- lapply(big_model_list, get_model_table)
+plot_data_big <- cbind(Group = big_clade_names, as.data.frame(do.call(rbind, lapply(big_model_list, evaluate_difference))))
+plot_data_big <- as.data.frame(plot_data_big)
+
 
 # plot data for all clades
 plot_data_all <- cbind(Group = clade_names, as.data.frame(do.call(rbind, lapply(all_model_list, evaluate_difference))))
@@ -115,7 +123,7 @@ plot_data_all <- as.data.frame(plot_data_all)
 library(gridExtra)
 library(aplot)
 library(ggplotify)
-plot_data <- plot_data_all
+plot_data <- plot_data_big
 plot_data_long <- pivot_longer(plot_data, cols = -Group)
 
 # backbone phylog10eny
@@ -190,36 +198,8 @@ abc <- grid.arrange(a, bc, ncol = 1)
 ggsave("plots/08_hidden_state_plot.pdf", abc)
 
 ##############################
-### BY OBSERVED STATE
-##############################
-
-# plot data for heterogenous clades
-plot_data_het <- cbind(Group = both_differ_clade_names, as.data.frame(do.call(rbind, lapply(both_differ_model_list, function(x) evaluate_difference(x, type = "obs")))))
-plot_data_het <- as.data.frame(plot_data_het)
-
-# plot data for all clades
-plot_data_all <- cbind(Group = clade_names, as.data.frame(do.call(rbind, lapply(all_model_list, function(x) evaluate_difference(x, type = "obs")))))
-plot_data_all <- as.data.frame(plot_data_all)
-
-##############################
 ### EXAMINING TURNOVER BY OBSERVED STATE
 ##############################
-
-plot_data <- plot_data_all
-
-# backbone phylog10eny
-phy_bb <- read.tree("backbone_tree.tre")
-dat_names <- unlist(lapply(strsplit(paste(plot_data$Group), " "), function(x) x[[1]]))
-phy_bb$tip.label <- unlist(lapply(strsplit(phy_bb$tip.label, "-"), function(x) x[[1]]))
-phy_bb$tip.label <- unlist(lapply(strsplit(phy_bb$tip.label, "_"), function(x) x[[1]]))
-to_drop <- phy_bb$tip.label[!phy_bb$tip.label %in% dat_names]
-phy_bb <- drop.tip(phy_bb, to_drop)
-plot(phy_bb)
-tip_names <- phy_bb$tip.label
-
-boxplot(log10(plot_data[,-1]))
-
-# scatter plot of diff
 
 rownames(plot_data) <- gsub(" .*", "", plot_data$Group)
 plot_data$Group <- gsub(" .*", "", plot_data$Group)
@@ -580,5 +560,9 @@ plot_data_all <- cbind(Group = clade_names, as.data.frame(do.call(rbind, lapply(
 plot_data_all <- as.data.frame(plot_data_all)
 
 plot_data <- plot_data_all
-
+colnames(plot_data) <- gsub("\\..*", "", colnames(plot_data))
 head(plot_data)
+plot_data <- cbind(plot_data,result_matrix[,-5])
+
+write.csv(plot_data, file = "all_par_table.csv", row.names = FALSE)
+colMeans(plot_data[,-1])
