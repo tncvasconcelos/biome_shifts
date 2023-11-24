@@ -1,4 +1,5 @@
 #rm(list=ls())
+setwd("/Users/tvasc/Desktop/biome_shifts")
 
 # WWFload is taken from speciesgeocodeR; all credit goes to the original authors
 WWFload <- function(x = NULL) {
@@ -131,3 +132,21 @@ for(i in 1:nrow(habitats)) {
 
 write.csv(habitats, "summarized_habitat.csv", row.names=F)
 
+summarized_habitat <- read.csv("summarized_habitat.csv")
+summarized_habitat$area_final <- NA
+
+for (i in 1:nrow(summarized_habitat)){
+  if (summarized_habitat[i, "area_open"] == 1 & summarized_habitat[i, "area_closed"] == 1){
+    summarized_habitat[i, "area_final"] = "widespread"
+  }
+  if (summarized_habitat[i, "area_open"] == 0 & summarized_habitat[i, "area_closed"] == 1){
+    summarized_habitat[i, "area_final"] = "closed"
+  }
+  if (summarized_habitat[i, "area_open"] == 1 & summarized_habitat[i, "area_closed"] == 0){
+    summarized_habitat[i, "area_final"] = "open"
+  }
+}
+
+table(summarized_habitat$area_final)
+#    closed       open widespread 
+# 10636       4818       3921 

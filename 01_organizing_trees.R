@@ -1,6 +1,5 @@
 
 # rm(list=ls())
-# setwd("~/Desktop/treebank/treebank")
 setwd("~/Desktop/biome_shifts")
 
 target_trees <- read.csv("all_trees_used.csv")
