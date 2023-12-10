@@ -15,109 +15,13 @@ require(aplot)
 library(gridExtra)
 library(ggplotify)
 library(ggsignif)
+library(ggridges)
 
 ##############################
-### MODEL SUPPORT GENERALLY 
+### load data
 ##############################
-# finished model sets for particular datsets
-to_load <- dir("5_results/", full.names = TRUE)
 
-quick_check <- function(model_path){
-  load(model_path)
-  return(all(unlist(lapply(res, function(x) class(x) == "try-error"))))
-}
-
-failed_load <- to_load[sapply(to_load, quick_check)]
-to_load <- to_load[!sapply(to_load, quick_check)]
-
-all_model_list <- list()
-for(i in 1:length(to_load)){
-  load(to_load[i])
-  all_model_list[[i]] <- res
-}
-
-# some labeling
-n_tips <- unlist(lapply(all_model_list, function(x) Ntip(x[[1]]$phy)))
-clade_names <- unlist(lapply(strsplit(to_load, "results_"), function(x) gsub(".RData", "", x[2])))
-clade_names <- unlist(lapply(strsplit(clade_names, "-"), function(x) x[[1]]))
-clade_names <- unlist(lapply(strsplit(clade_names, "_"), function(x) x[[1]]))
-clade_names <- paste0(clade_names, " (", n_tips, ")")
-# the calculation
-aic_table <- do.call(rbind, lapply(all_model_list, GetAICWeights))
-which_models <- do.call(rbind, lapply(all_model_list[[1]], test_hypotheses))
-result_matrix <- aic_table %*% which_models
-rownames(result_matrix) <- clade_names
-head(result_matrix)
-
-# Add row names as a column
-result_matrix <- as.data.frame(result_matrix)
-result_matrix <- result_matrix[,-2]
-result_matrix$RowNames <- rownames(result_matrix)
-# Reshape the data from wide to long format
-result_matrix_long <- result_matrix %>%
-  pivot_longer(cols = -RowNames, names_to = "Variable", values_to = "Value")
-
-result_matrix_long$Variable <- factor(result_matrix_long$Variable, unique(result_matrix_long$Variable))
-colnames(result_matrix_long)[1] <- "id"
-# Create the heatmap
-#D01B1B, #FF4242, #FFFFFF, #e7f9ff, #95D2EC and #47abd8. 
-phy_bb <- read.tree("backbone_tree.tre")
-phy_bb$tip.label <- gsub("-.*", "", phy_bb$tip.label)
-phy_bb$tip.label <- gsub("_.*", "", phy_bb$tip.label)
-phy_bb$tip.label <- clade_names[match(phy_bb$tip.label, gsub(" .*", "", clade_names))]
-phy_bb$tip.label[is.na(match(phy_bb$tip.label, gsub(" .*", "", clade_names)))]
-phy_bb <- drop.tip(phy_bb, which(is.na(phy_bb$tip.label)))
-
-a <- ggtree(phy_bb) +
-  geom_tiplab() +
-  coord_cartesian(xlim = c(0, 180)) +
-  ggtitle("a) Backbone Phylog10eny")
-
-b <- ggplot(result_matrix_long, aes(x = Variable, y = id, fill = Value)) +
-  ggtitle("b) Support for rate heterogeneity") +
-  geom_tile() +
-  scale_fill_viridis_c(option = "E", name = expression(sum(AIC[wt]))) +
-  labs(x = NULL, y = NULL) +
-  theme_tree2()
-
-# ggplot(result_matrix_long, aes(x = Variable, y = id, fill = Value)) +
-#   ggtitle("b) Support for rate heterogeneity") +
-#   geom_tile() +
-#   scale_fill_viridis_c(option = "E", name = expression(sum(AIC[wt]))) +
-#   labs(x = NULL, y = NULL)
-
-ab <- b %>% insert_left(a, width = 3)  
-ab
-
-# Print the plot
-ggsave("plots/08_aic_support_plot.pdf", ab)
-
-
-##############################
-### Creating a master table
-##############################
-# look at the ones where our hypothesis is potentially supportable and see whether rates are higher in one than the other. need to consider how to measure "rates"
-both_differ_model_list <- all_model_list[result_matrix$both_differ > 0.5]
-both_differ_clade_names <- clade_names[result_matrix$both_differ > 0.5]
-both_differ_model_table <- lapply(both_differ_model_list, get_model_table)
-
-# plot data for heterogenous clades
-plot_data_het <- cbind(Group = both_differ_clade_names, as.data.frame(do.call(rbind, lapply(both_differ_model_list, function(x) evaluate_difference(x, type = "all")))))
-plot_data_het <- as.data.frame(plot_data_het)
-
-# plot data for all clades
-plot_data_all <- cbind(Group = clade_names, as.data.frame(do.call(rbind, lapply(all_model_list, function(x) evaluate_difference(x, type = "all")))))
-plot_data_all <- as.data.frame(plot_data_all)
-
-plot_data <- plot_data_all
-colnames(plot_data) <- gsub("\\..*", "", colnames(plot_data))
-head(plot_data)
-plot_data <- cbind(plot_data,result_matrix[,-5])
-rownames(plot_data) <- gsub(" .*", "", plot_data$Group)
-plot_data$Group <- gsub(" .*", "", plot_data$Group)
-
-write.csv(plot_data, file = "all_par_table.csv", row.names = FALSE)
-colMeans(plot_data[,-1])
+plot_data <- read.csv("all_par_table.csv")
 
 ##############################
 ### correcting tip labels
@@ -159,11 +63,10 @@ lm_dat <- lm_dat[match(phy_bb$tip.label, rownames(lm_dat)),]
 fit = phylolm(d_turns ~ d_trans, data=lm_dat, phy=phy_bb, boot = 1000)
 summary(fit)
 lm_dat$predicted <- predict(fit, lm_dat)
-lm_dat$ntaxa <- n_tips
-lm_dat$aicwt <- result_matrix$both_differ
+lm_dat$ntaxa <-plot_data$ntip
 
 a <- ggplot(lm_dat, aes(x = lm_dat$d_trans, y = lm_dat$d_turns)) +
-  geom_point(aes(col = "red", size = lm_dat$aicwt * 7, alpha = 0.5)) +
+  geom_point(aes(col = "red", alpha = 0.5)) +
   labs(
     x = expression(log(Delta * transition~rates)),
     y = expression(log(Delta * turnover~rates))) +
@@ -171,8 +74,9 @@ a <- ggplot(lm_dat, aes(x = lm_dat$d_trans, y = lm_dat$d_turns)) +
   ggtitle("a) Regression of differences") +
   geom_line(aes(x = lm_dat$d_trans, y = lm_dat$predicted), color = "blue") +
   geom_hline(yintercept = 0) +
-  geom_vline(xintercept = 0)
-  # geom_text(aes(x = lm_dat$d_trans, y = lm_dat$d_turns, label = rownames(lm_dat)), hjust = 0.4, vjust = 1, size = 3)
+  geom_vline(xintercept = 0) +
+  theme(legend.position = "none")
+# geom_text(aes(x = lm_dat$d_trans, y = lm_dat$d_turns, label = rownames(lm_dat)), hjust = 0.4, vjust = 1, size = 3)
 
 b1 <- ggtree(phy_bb) +
   geom_tiplab(size = 2) +
@@ -203,7 +107,7 @@ c <- ggplot(filtered_data, aes(y = (value), x = name, fill=name)) +
 
 bc <- grid.arrange(as.grob(b), as.grob(c), ncol = 2, widths = c(1,0.5))
 
-abc <- grid.arrange(a, bc, ncol = 1)
+abc <- grid.arrange(a, bc, ncol = 1, heights = c(0.5,1))
 ggsave("plots/08_hidden_state_plot.pdf", abc)
 
 ##############################
@@ -237,86 +141,52 @@ tn_data <- data.frame(tn_00 = log(rowMeans(tn_00)),
 long_data <- tn_data %>%
   pivot_longer(cols = everything(), names_to = "group", values_to = "values")
 
+long_data$group <- factor(long_data$group, labels = c("C", "W", "O"))
+
 max_value <- max(long_data$values, na.rm = TRUE)
 buffer <- (max_value - min(long_data$values, na.rm = TRUE)) * 0.1  # 10% buffer
 
 pairwise_comparisons <- data.frame(
-  group1 = factor(c('tn_00', 'tn_01', 'tn_00')),
-  group2 = factor(c('tn_01', 'tn_11', 'tn_11')),
+  group1 = factor(c("W", "W", "C"),
+                  levels = c("C", "W", "O")),
+  group2 = factor(c("C", "O", "O"),
+                  levels = c("C", "W", "O")),
   p.value = c(ttest_01_00$P.dbar, ttest_01_11$P.dbar, ttest_00_11$P.dbar),
   signif_label = ifelse(c(ttest_01_00$P.dbar, ttest_01_11$P.dbar, ttest_00_11$P.dbar) < 0.05, "*", ""))
 
 pairwise_comparisons <- pairwise_comparisons %>%
   mutate(
-    y_position = max_value + seq(1, n(), by = 1) * buffer,  
-    midpoint = ((as.numeric(group1) + as.numeric(group2)) / 2) + 0.5
+    y_position = max_value + seq(1, n(), by = 1) * (buffer/2),  
+    midpoint = ((as.numeric(group1) + as.numeric(group2)) / 2)
   )
 
-ggplot(long_data, aes(x = group, y = values)) + 
-  geom_boxplot() +
-  geom_segment(data = pairwise_comparisons, 
-               aes(x = group1, xend = group2, y = y_position, yend = y_position), 
+ggplot() +
+  geom_flat_violin(data = long_data, 
+                   aes(x = group, y = values, fill = group, alpha = 0.5), 
+                   position = position_nudge(x = -0.175)) +
+  geom_point(data = long_data, 
+             aes(x = group, y = values, color = group, size = 1),
+             position = position_jitter(width = 0.05), alpha = 0.5) +
+  geom_boxplot(data = long_data, 
+               aes(x = group, y = values, fill = group, alpha = 0.5), 
+               outlier.shape = NA, width = 0.25) +
+  geom_segment(data = pairwise_comparisons,
+               aes(x = group1, xend = group2, y = y_position, yend = y_position),
                linetype = "solid") +
-  geom_text(data = pairwise_comparisons, 
-            aes(x = midpoint, y = y_position, label = signif_label)) +
-  ggtitle("a) All clades included")
+  geom_text(data = pairwise_comparisons,
+            aes(x = midpoint, y = y_position, label = signif_label), size = 10) +
+  ggtitle("a)") +
+  xlab("Observed State") +
+  ylab(expression(log(Turnover))) +
+  coord_cartesian(xlim = c(0.9, 3.1)) +
+  theme_minimal() +
+  theme(legend.position = "none", 
+        axis.text.x = element_text(size = 14),
+        axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16),
+        plot.title = element_text(size = 18))
 
-# hetero clades
-# plot_data <- plot_data[result_matrix$both_differ > 0.5,]
-# tn_00 <- cbind(plot_data$tn_00_a,
-#                plot_data$tn_00_b)
-# tn_01 <- cbind(plot_data$tn_01_a,
-#                plot_data$tn_01_b)
-# tn_11 <- cbind(plot_data$tn_11_a,
-#                plot_data$tn_11_b)
-# 
-# # phylo ttest
-# phy_bb <- keep.tip(phy_bb, plot_data$Group)
-# ttest_01_00 <- phyl.pairedttest(phy_bb, 
-#                                 x1 = setNames(log(rowMeans(tn_01)), plot_data$Group),
-#                                 x2 = setNames(log(rowMeans(tn_00)), plot_data$Group))
-# ttest_01_11 <- phyl.pairedttest(phy_bb, 
-#                                 x1 = setNames(log(rowMeans(tn_01)), plot_data$Group),
-#                                 x2 = setNames(log(rowMeans(tn_11)), plot_data$Group))
-# ttest_00_11 <- phyl.pairedttest(phy_bb, 
-#                                 x1 = setNames(log(rowMeans(tn_00)), plot_data$Group),
-#                                 x2 = setNames(log(rowMeans(tn_11)), plot_data$Group))
-# 
-# # Adding a group column to each dataset
-# tn_data <- data.frame(tn_00 = log(rowMeans(tn_00)),
-#                       tn_01 = log(rowMeans(tn_01)),
-#                       tn_11 = log(rowMeans(tn_11)))
-# apply(exp(tn_data), 2, median)
-# 
-# long_data <- tn_data %>%
-#   pivot_longer(cols = everything(), names_to = "group", values_to = "values")
-# 
-# max_value <- max(long_data$values, na.rm = TRUE)
-# buffer <- (max_value - min(long_data$values, na.rm = TRUE)) * 0.1  # 10% buffer
-# 
-# pairwise_comparisons <- data.frame(
-#   group1 = factor(c('tn_00', 'tn_01', 'tn_00')),
-#   group2 = factor(c('tn_01', 'tn_11', 'tn_11')),
-#   p.value = c(ttest_01_00$P.dbar, ttest_01_11$P.dbar, ttest_00_11$P.dbar),
-#   signif_label = ifelse(c(ttest_01_00$P.dbar, ttest_01_11$P.dbar, ttest_00_11$P.dbar) < 0.05, "*", ""))
-# 
-# pairwise_comparisons <- pairwise_comparisons %>%
-#   mutate(
-#     y_position = max_value + seq(1, n(), by = 1) * buffer,  
-#     midpoint = ((as.numeric(group1) + as.numeric(group2)) / 2) + 0.5
-#   )
-# 
-# b <- ggplot(long_data, aes(x = group, y = values)) + 
-#   geom_boxplot() +
-#   geom_segment(data = pairwise_comparisons, 
-#                aes(x = group1, xend = group2, y = y_position, yend = y_position), 
-#                linetype = "solid") +
-#   geom_text(data = pairwise_comparisons, 
-#             aes(x = midpoint, y = y_position, label = signif_label)) +
-#   ggtitle("b) Hidden state support in turn and rates")
-# 
-# grid.arrange(a, b, nrow = 1)
-
+ggsave("plots/turnover_vs_obs_state.pdf")
 
 ##############################
 ### boxplot 
@@ -339,14 +209,14 @@ trans_data <- data.frame(f00_t01 = (rowMeans(f00_t01)),
                          f11_t01 = (rowMeans(f11_t01)))
 
 ttest_a_b <- phyl.pairedttest(phy_bb, 
-                                x1 = setNames(log(trans_data$f00_t01), plot_data$Group),
-                                x2 = setNames(log(trans_data$f01_t00), plot_data$Group))
+                              x1 = setNames(log(trans_data$f00_t01), plot_data$Group),
+                              x2 = setNames(log(trans_data$f01_t00), plot_data$Group))
 ttest_a_c <- phyl.pairedttest(phy_bb, 
-                                x1 = setNames(log(trans_data$f00_t01), plot_data$Group),
-                                x2 = setNames(log(trans_data$f01_t11), plot_data$Group))
+                              x1 = setNames(log(trans_data$f00_t01), plot_data$Group),
+                              x2 = setNames(log(trans_data$f01_t11), plot_data$Group))
 ttest_a_d <- phyl.pairedttest(phy_bb, 
-                                x1 = setNames(log(trans_data$f00_t01), plot_data$Group),
-                                x2 = setNames(log(trans_data$f11_t01), plot_data$Group))
+                              x1 = setNames(log(trans_data$f00_t01), plot_data$Group),
+                              x2 = setNames(log(trans_data$f11_t01), plot_data$Group))
 
 ttest_b_c <- phyl.pairedttest(phy_bb, 
                               x1 = setNames(log(trans_data$f01_t00), plot_data$Group),
@@ -359,16 +229,59 @@ ttest_c_d <- phyl.pairedttest(phy_bb,
                               x1 = setNames(log(trans_data$f01_t11), plot_data$Group),
                               x2 = setNames(log(trans_data$f11_t01), plot_data$Group))
 
-apply(trans_data, 2, median)
 
-long_data <- trans_data %>%
+long_data <- log(trans_data) %>%
   pivot_longer(cols = everything(), names_to = "group", values_to = "values")
 
-ggplot(long_data, aes(x = group, y = log(values))) + 
-  geom_boxplot() +
-  ggtitle("b) Observed transition rates") +
-  coord_cartesian(ylim=c(-5, 5))
+long_data$group <- factor(long_data$group, labels = c("C to W", "W to C", "W to O", "O to W"))
 
+max_value <- max(long_data$values, na.rm = TRUE)
+buffer <- (max_value - min(long_data$values, na.rm = TRUE)) * 0.1  # 10% buffer
+
+p_values <- c(ttest_a_b$P.dbar, ttest_a_c$P.dbar, ttest_a_d$P.dbar, ttest_b_c$P.dbar, ttest_b_d$P.dbar, ttest_c_d$P.dbar)
+pairwise_comparisons <- data.frame(
+  group1 = factor(
+    c("C to W", "C to W", "C to W", "W to C", "W to C", "W to O"),
+    levels = c("C to W", "W to C", "W to O", "O to W")),
+  group2 = factor(
+    c("W to C", "W to O", "O to W", "W to O", "O to W", "O to W"),
+    levels = c("C to W", "W to C", "W to O", "O to W")),
+  p.value = p_values,
+  signif_label = ifelse(p_values < 0.05, "*", ""))
+
+pairwise_comparisons <- pairwise_comparisons %>%
+  mutate(
+    y_position = max_value + seq(1, n(), by = 1) * (buffer/2),  
+    midpoint = ((as.numeric(group1) + as.numeric(group2)) / 2)
+  )
+
+ggplot() +
+  geom_flat_violin(data = long_data, 
+                   aes(x = group, y = values, fill = group, alpha = 0.5), 
+                   position = position_nudge(x = -0.175)) +
+  geom_point(data = long_data, 
+             aes(x = group, y = values, color = group, size = 1),
+             position = position_jitter(width = 0.05), alpha = 0.5) +
+  geom_boxplot(data = long_data, 
+               aes(x = group, y = values, fill = group, alpha = 0.5), 
+               outlier.shape = NA, width = 0.25) +
+  geom_segment(data = pairwise_comparisons,
+               aes(x = group1, xend = group2, y = y_position, yend = y_position),
+               linetype = "solid") +
+  geom_text(data = pairwise_comparisons,
+            aes(x = midpoint, y = y_position, label = signif_label), size = 10) +
+  ggtitle("b)") +
+  xlab("Transition") +
+  ylab(expression(log(Transition_Rate))) +
+  coord_cartesian(xlim = c(1, 4)) +
+  theme_minimal() +
+  theme(legend.position = "none", 
+        axis.text.x = element_text(size = 14),
+        axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16),
+        plot.title = element_text(size = 18))
+
+ggsave("plots/trans_rate_vs_transition.pdf")
 
 ##############################
 ### examining extinction fraction dynamics
@@ -386,11 +299,11 @@ rate_class_b_rate <- cbind(plot_data$f00_t01_b,
                            plot_data$f01_t11_b,
                            plot_data$f11_t01_b)
 rate_class_a_ef <- cbind(plot_data$ef_00_a,
-                           plot_data$ef_01_a,
-                           plot_data$ef_11_a)
+                         plot_data$ef_01_a,
+                         plot_data$ef_11_a)
 rate_class_b_ef <- cbind(plot_data$ef_00_b,
-                           plot_data$ef_01_b,
-                           plot_data$ef_11_b)
+                         plot_data$ef_01_b,
+                         plot_data$ef_11_b)
 
 # scatter plot of diff
 lm_dat <- data.frame(row.names = gsub(" .*", "", plot_data[,1]),
@@ -448,4 +361,114 @@ bc <- grid.arrange(as.grob(b), as.grob(c), ncol = 2, widths = c(1,0.5))
 abc <- grid.arrange(a, bc, ncol = 1)
 ggsave("plots/08_hidden_state_plot.pdf", abc)
 
+
+##############################
+### regression of mean observed rate against turnover
+##############################
+
+# all clades
+tn_00 <- cbind(plot_data$tn_00_a,
+               plot_data$tn_00_b)
+tn_01 <- cbind(plot_data$tn_01_a,
+               plot_data$tn_01_b)
+tn_11 <- cbind(plot_data$tn_11_a,
+               plot_data$tn_11_b)
+
+# phylo ttest
+ttest_01_00 <- phyl.pairedttest(phy_bb, 
+                                x1 = setNames(log(rowMeans(tn_01)), plot_data$Group),
+                                x2 = setNames(log(rowMeans(tn_00)), plot_data$Group))
+ttest_01_11 <- phyl.pairedttest(phy_bb, 
+                                x1 = setNames(log(rowMeans(tn_01)), plot_data$Group),
+                                x2 = setNames(log(rowMeans(tn_11)), plot_data$Group))
+ttest_00_11 <- phyl.pairedttest(phy_bb, 
+                                x1 = setNames(log(rowMeans(tn_00)), plot_data$Group),
+                                x2 = setNames(log(rowMeans(tn_11)), plot_data$Group))
+
+# Adding a group column to each dataset
+tn_data <- data.frame(tn_00 = log(rowMeans(tn_00)),
+                      tn_01 = log(rowMeans(tn_01)),
+                      tn_11 = log(rowMeans(tn_11)))
+
+long_data <- tn_data %>%
+  pivot_longer(cols = everything(), names_to = "group", values_to = "values")
+
+max_value <- max(long_data$values, na.rm = TRUE)
+buffer <- (max_value - min(long_data$values, na.rm = TRUE)) * 0.1  # 10% buffer
+
+pairwise_comparisons <- data.frame(
+  group1 = factor(c('tn_00', 'tn_01', 'tn_00')),
+  group2 = factor(c('tn_01', 'tn_11', 'tn_11')),
+  p.value = c(ttest_01_00$P.dbar, ttest_01_11$P.dbar, ttest_00_11$P.dbar),
+  signif_label = ifelse(c(ttest_01_00$P.dbar, ttest_01_11$P.dbar, ttest_00_11$P.dbar) < 0.05, "*", ""))
+
+pairwise_comparisons <- pairwise_comparisons %>%
+  mutate(
+    y_position = max_value + seq(1, n(), by = 1) * buffer,  
+    midpoint = ((as.numeric(group1) + as.numeric(group2)) / 2) + 0.5
+  )
+
+a <- ggplot(long_data, aes(x = group, y = values)) + 
+  geom_boxplot() +
+  geom_segment(data = pairwise_comparisons, 
+               aes(x = group1, xend = group2, y = y_position, yend = y_position), 
+               linetype = "solid") +
+  geom_text(data = pairwise_comparisons, 
+            aes(x = midpoint, y = y_position, label = signif_label)) +
+  ggtitle("a) All clades included")
+
+# hetero clades
+plot_data <- plot_data[result_matrix$both_differ > 0.5,]
+tn_00 <- cbind(plot_data$tn_00_a,
+               plot_data$tn_00_b)
+tn_01 <- cbind(plot_data$tn_01_a,
+               plot_data$tn_01_b)
+tn_11 <- cbind(plot_data$tn_11_a,
+               plot_data$tn_11_b)
+
+# phylo ttest
+phy_bb <- keep.tip(phy_bb, plot_data$Group)
+ttest_01_00 <- phyl.pairedttest(phy_bb, 
+                                x1 = setNames(log(rowMeans(tn_01)), plot_data$Group),
+                                x2 = setNames(log(rowMeans(tn_00)), plot_data$Group))
+ttest_01_11 <- phyl.pairedttest(phy_bb, 
+                                x1 = setNames(log(rowMeans(tn_01)), plot_data$Group),
+                                x2 = setNames(log(rowMeans(tn_11)), plot_data$Group))
+ttest_00_11 <- phyl.pairedttest(phy_bb, 
+                                x1 = setNames(log(rowMeans(tn_00)), plot_data$Group),
+                                x2 = setNames(log(rowMeans(tn_11)), plot_data$Group))
+
+# Adding a group column to each dataset
+tn_data <- data.frame(tn_00 = log(rowMeans(tn_00)),
+                      tn_01 = log(rowMeans(tn_01)),
+                      tn_11 = log(rowMeans(tn_11)))
+
+long_data <- tn_data %>%
+  pivot_longer(cols = everything(), names_to = "group", values_to = "values")
+
+max_value <- max(long_data$values, na.rm = TRUE)
+buffer <- (max_value - min(long_data$values, na.rm = TRUE)) * 0.1  # 10% buffer
+
+pairwise_comparisons <- data.frame(
+  group1 = factor(c('tn_00', 'tn_01', 'tn_00')),
+  group2 = factor(c('tn_01', 'tn_11', 'tn_11')),
+  p.value = c(ttest_01_00$P.dbar, ttest_01_11$P.dbar, ttest_00_11$P.dbar),
+  signif_label = ifelse(c(ttest_01_00$P.dbar, ttest_01_11$P.dbar, ttest_00_11$P.dbar) < 0.05, "*", ""))
+
+pairwise_comparisons <- pairwise_comparisons %>%
+  mutate(
+    y_position = max_value + seq(1, n(), by = 1) * buffer,  
+    midpoint = ((as.numeric(group1) + as.numeric(group2)) / 2) + 0.5
+  )
+
+b <- ggplot(long_data, aes(x = group, y = values)) + 
+  geom_boxplot() +
+  geom_segment(data = pairwise_comparisons, 
+               aes(x = group1, xend = group2, y = y_position, yend = y_position), 
+               linetype = "solid") +
+  geom_text(data = pairwise_comparisons, 
+            aes(x = midpoint, y = y_position, label = signif_label)) +
+  ggtitle("b) Hidden state support in turn and rates")
+
+grid.arrange(a, b, nrow = 1)
 
