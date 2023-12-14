@@ -1,12 +1,11 @@
-
 # rm(list=ls())
-# setwd("~/Desktop/treebank/treebank")
-setwd("~/Desktop/biome_shifts")
+# setwd("biome_shifts")
+
+#--------------------------------------
 library(rgbif)
 source("00_utility_functions.R")
 
 trees <- load.trees("2_trees/")
-
 all_tips_to_gbif <- c()
 for(tree_index in 1:length(trees)) {
   tips_one_tree <- resolve.names(trees[[tree_index]]$tip.label)

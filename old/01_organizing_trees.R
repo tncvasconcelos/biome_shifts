@@ -1,7 +1,7 @@
-
 # rm(list=ls())
-setwd("~/Desktop/biome_shifts")
+# setwd("biome_shifts")
 
+#--------------------------------------
 target_trees <- read.csv("all_trees_used.csv")
 tree_labels <- target_trees$label
 
