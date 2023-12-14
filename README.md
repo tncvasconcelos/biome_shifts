@@ -74,5 +74,6 @@ Other files:
 
 
 ----
-Distribution data used in niche analyses comes from:
+Distribution data comes from:
+GBIF.org (04 May 2023) GBIF Occurrence Download https://doi.org/10.15468/dl.9y3t82
 
