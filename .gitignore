@@ -46,3 +46,4 @@ vignettes/*.pdf
 .DS_Store
 gbif_data/
 wcvp/
+submission/
