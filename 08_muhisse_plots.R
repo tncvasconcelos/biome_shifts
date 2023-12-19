@@ -58,25 +58,32 @@ rate_class_b_turn <- cbind(plot_data$tn_00_b,
 lm_dat <- data.frame(row.names = gsub(" .*", "", plot_data[,1]),
                      d_trans = log(rowMeans(rate_class_b_rate)) - log(rowMeans(rate_class_a_rate)),
                      d_turns = log(rowMeans(rate_class_b_turn)) - log(rowMeans(rate_class_a_turn)))
+# for bar charts
+bar_dat <- data.frame(row.names = gsub(" .*", "", plot_data[,1]),
+                      trans_a = log(rowMeans(rate_class_a_rate)),
+                      trans_b = log(rowMeans(rate_class_b_rate)),
+                      turns_a = log(rowMeans(rate_class_a_turn)),
+                      turns_b = log(rowMeans(rate_class_b_turn)))
 
 lm_dat <- lm_dat[match(phy_bb$tip.label, rownames(lm_dat)),]
+bar_dat <- bar_dat[match(phy_bb$tip.label, rownames(bar_dat)),]
+
 fit = phylolm(d_turns ~ d_trans, data=lm_dat, phy=phy_bb, boot = 1000)
-summary(fit)
 lm_dat$predicted <- predict(fit, lm_dat)
 lm_dat$ntaxa <-plot_data$ntip
 
-a <- ggplot(lm_dat, aes(x = lm_dat$d_trans, y = lm_dat$d_turns)) +
-  geom_point(aes(col = "red", alpha = 0.5)) +
+a <- ggplot(lm_dat, aes(x = d_trans, y = d_turns)) +
+  geom_point(aes(alpha = 0.5, size = 1)) +
   labs(
-    x = expression(log(Delta * transition~rates)),
-    y = expression(log(Delta * turnover~rates))) +
-  theme_minimal() +
+    x = expression(Delta * log(transition~rates)),
+    y = expression(Delta * log(turnover~rates))) +
   ggtitle("a) Regression of differences") +
-  geom_line(aes(x = lm_dat$d_trans, y = lm_dat$predicted), color = "blue") +
-  geom_hline(yintercept = 0) +
-  geom_vline(xintercept = 0) +
-  theme(legend.position = "none")
-# geom_text(aes(x = lm_dat$d_trans, y = lm_dat$d_turns, label = rownames(lm_dat)), hjust = 0.4, vjust = 1, size = 3)
+  theme_bw() +
+  geom_line(aes(x = d_trans, y = predicted), color = "black") +
+  theme(legend.position = "none", 
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.title = element_text(size = 14))
 
 b1 <- ggtree(phy_bb) +
   geom_tiplab(size = 2) +
@@ -84,26 +91,69 @@ b1 <- ggtree(phy_bb) +
   ggtitle("b) Rate differences by clade")
 
 lm_dat$id <- rownames(lm_dat)
-lm_dat_long <- pivot_longer(lm_dat, cols = -id)
-filtered_data <- lm_dat_long[lm_dat_long$name %in% c("d_trans", "d_turns"), ]
+bar_dat$id <- rownames(bar_dat)
 
-b2 <- ggplot(filtered_data, aes(x=id, y=value, fill=name)) + 
+lm_dat_long <- pivot_longer(lm_dat, cols = -id)
+bar_dat_long <- pivot_longer(bar_dat, cols = -id)
+
+filtered_data <- lm_dat_long[lm_dat_long$name %in% c("d_trans", "d_turns"), ]
+filtered_data$name <- factor(filtered_data$name, labels = c("Transition", "Turnover"))
+
+filt_dat_trans <- bar_dat_long[grep("trans", bar_dat_long$name),]
+filt_dat_turns <- bar_dat_long[grep("turns", bar_dat_long$name),]
+
+b3 <- ggplot(filt_dat_turns, aes(x=id, y=value, fill=name)) + 
   geom_bar(stat="identity", position="dodge") +
+  scale_fill_manual(values = c("#74a9cf", "#034e7b")) +
   theme_minimal() +
   theme(
     axis.title.y = element_blank(),      # Remove axis titles
     axis.text.y = element_blank(),       # Remove axis text
     plot.title = element_blank(),      # Remove plot title
+    axis.title.x = element_text(size = 12),
     legend.position = "none"
   ) +
-  coord_flip()
+  coord_flip() +
+  ylab("log(Turnover Rate)")
 
-b <- b2 %>% insert_left(b1, width = 0.75)
+b2 <- ggplot(filt_dat_trans, aes(x=id, y=value, fill=name)) + 
+  geom_bar(stat="identity", position="dodge") +
+  scale_fill_manual(values = c("#fd8d3c", "#b10026")) +
+  theme_minimal() +
+  theme(
+    axis.title.y = element_blank(),      # Remove axis titles
+    axis.text.y = element_blank(),       # Remove axis text
+    plot.title = element_blank(),      # Remove plot title
+    axis.title.x = element_text(size = 12),
+    legend.position = "none"
+  ) +
+  coord_flip() +
+  ylab("log(Transition Rate)")
 
-c <- ggplot(filtered_data, aes(y = (value), x = name, fill=name)) +
+b <- b3 %>% insert_left(b2) %>% insert_left(b1, width = 1.5)
+
+c <- ggplot() +
+  geom_flat_violin(data = filtered_data, 
+                   aes(x = name, y = value, fill = name, alpha = 0.5), 
+                   position = position_nudge(x = -0.175)) +
+  geom_point(data = filtered_data, 
+             aes(x = name, y = value, color = name, size = 1),
+             position = position_jitter(width = 0.05), alpha = 0.5) +
+  geom_boxplot(data = filtered_data, 
+               aes(x = name, y = value, fill = name, alpha = 0.5), 
+               outlier.shape = NA, width = 0.25) +
+  scale_fill_manual(values = c("#e31a1c", "#0570b0")) +
+  scale_color_manual(values = c("#e31a1c", "#0570b0")) +
   ggtitle("c) Distribution of rate differences") + 
-  geom_violin() +
-  theme_minimal()
+  xlab("Comparison") +
+  ylab(expression(log(Delta*Rate))) +
+  coord_cartesian(xlim = c(0.9, 2)) +
+  theme_minimal() +
+  theme(legend.position = "none", 
+        axis.text.x = element_text(size = 12),
+        axis.title.x = element_text(size = 0),
+        axis.title.y = element_text(size = 12),
+        plot.title = element_text(size = 14))
 
 bc <- grid.arrange(as.grob(b), as.grob(c), ncol = 2, widths = c(1,0.5))
 

@@ -22,14 +22,6 @@ library(ggsignif)
 # finished model sets for particular datsets
 to_load <- dir("5_results/", full.names = TRUE)
 
-quick_check <- function(model_path){
-  load(model_path)
-  return(all(unlist(lapply(res, function(x) class(x) == "try-error"))))
-}
-
-failed_load <- to_load[sapply(to_load, quick_check)]
-to_load <- to_load[!sapply(to_load, quick_check)]
-
 all_model_list <- list()
 for(i in 1:length(to_load)){
   load(to_load[i])
