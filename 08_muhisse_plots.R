@@ -71,9 +71,16 @@ bar_dat <- bar_dat[match(phy_bb$tip.label, rownames(bar_dat)),]
 fit = phylolm(d_turns ~ d_trans, data=lm_dat, phy=phy_bb, boot = 1000)
 lm_dat$predicted <- predict(fit, lm_dat)
 lm_dat$ntaxa <-plot_data$ntip
+col_a <- lm_dat$d_trans* lm_dat$d_turns >= 0
+col_b <- lm_dat$d_trans* lm_dat$d_turns < 0
+cols <- c("purple", "forestgreen")
+lm_dat$cols <- NA
+lm_dat$cols[col_a] <- cols[1]
+lm_dat$cols[col_b] <- cols[2]
 
 a <- ggplot(lm_dat, aes(x = d_trans, y = d_turns)) +
-  geom_point(aes(alpha = 0.5, size = 1)) +
+  geom_point(aes(alpha = 0.5, size = 1, color = cols)) +
+  scale_color_manual(values = cols) +
   labs(
     x = expression(Delta * log(transition~rates)),
     y = expression(Delta * log(turnover~rates))) +
@@ -118,7 +125,7 @@ b3 <- ggplot(filt_dat_turns, aes(x=id, y=value, fill=name)) +
 
 b2 <- ggplot(filt_dat_trans, aes(x=id, y=value, fill=name)) + 
   geom_bar(stat="identity", position="dodge") +
-  scale_fill_manual(values = c("#fd8d3c", "#b10026")) +
+  scale_fill_manual(values = c("#fc9272", "#b10026")) +
   theme_minimal() +
   theme(
     axis.title.y = element_blank(),      # Remove axis titles
@@ -158,7 +165,7 @@ c <- ggplot() +
 bc <- grid.arrange(as.grob(b), as.grob(c), ncol = 2, widths = c(1,0.5))
 
 abc <- grid.arrange(a, bc, ncol = 1, heights = c(0.5,1))
-ggsave("plots/08_hidden_state_plot.pdf", abc)
+ggsave("plots/08_hidden_state_plot.pdf", abc, width = 11, height = 10)
 
 ##############################
 ### boxplot of observed state against turnover
@@ -210,6 +217,8 @@ pairwise_comparisons <- pairwise_comparisons %>%
     midpoint = ((as.numeric(group1) + as.numeric(group2)) / 2)
   )
 
+cols <- c("orange", "lightgreen", "darkgreen")
+
 ggplot() +
   geom_flat_violin(data = long_data, 
                    aes(x = group, y = values, fill = group, alpha = 0.5), 
@@ -217,9 +226,11 @@ ggplot() +
   geom_point(data = long_data, 
              aes(x = group, y = values, color = group, size = 1),
              position = position_jitter(width = 0.05), alpha = 0.5) +
+  scale_color_manual(values = cols) + 
   geom_boxplot(data = long_data, 
                aes(x = group, y = values, fill = group, alpha = 0.5), 
                outlier.shape = NA, width = 0.25) +
+  scale_fill_manual(values = cols) + 
   geom_segment(data = pairwise_comparisons,
                aes(x = group1, xend = group2, y = y_position, yend = y_position),
                linetype = "solid") +
