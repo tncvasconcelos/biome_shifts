@@ -111,3 +111,6 @@ plot_data$ntip <- n_tips
 
 write.csv(plot_data, file = "all_par_table.csv", row.names = FALSE)
 colMeans(plot_data[,-1])
+
+
+

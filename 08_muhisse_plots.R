@@ -97,6 +97,7 @@ b1 <- ggtree(phy_bb) +
   coord_cartesian(xlim = c(0, 180)) +
   ggtitle("b) Rate differences by clade")
 
+lm_dat <- lm_dat[,-5]
 lm_dat$id <- rownames(lm_dat)
 bar_dat$id <- rownames(bar_dat)
 
@@ -343,6 +344,18 @@ ggplot() +
         plot.title = element_text(size = 18))
 
 ggsave("plots/trans_rate_vs_transition.pdf")
+
+long_data$values <- (long_data$values)
+summary <- long_data %>%
+  group_by(group) %>%
+  summarise(
+    mean_value = exp(mean(values, na.rm = TRUE)), 
+    sd_value = sd(values, na.rm = TRUE)
+  )
+
+print(summary)
+exp(0.584)
+
 
 ##############################
 ### examining extinction fraction dynamics
