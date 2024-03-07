@@ -250,6 +250,17 @@ ggplot() +
 
 ggsave("plots/turnover_vs_obs_state.pdf")
 
+
+summary <- long_data %>%
+  group_by(group) %>%
+  summarise(
+    mean_value = exp(mean(values, na.rm = TRUE)), 
+    sd_value = sd(values, na.rm = TRUE)
+  )
+
+print(summary)
+exp(0.584)
+
 ##############################
 ### boxplot 
 ##############################
