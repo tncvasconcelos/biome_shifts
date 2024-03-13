@@ -58,6 +58,65 @@ rate_class_b_turn <- cbind(plot_data$tn_00_b,
 lm_dat <- data.frame(row.names = gsub(" .*", "", plot_data[,1]),
                      d_trans = log(rowMeans(rate_class_b_rate)) - log(rowMeans(rate_class_a_rate)),
                      d_turns = log(rowMeans(rate_class_b_turn)) - log(rowMeans(rate_class_a_turn)))
+
+# bootstrap data.frame
+boot_dat <- data.frame(row.names = gsub(" .*", "", plot_data[,1]),
+                       trans_a = log(rowMeans(rate_class_a_rate)),
+                       trans_b = log(rowMeans(rate_class_b_rate)),
+                       turns_a = log(rowMeans(rate_class_a_turn)),
+                       turns_b = log(rowMeans(rate_class_b_turn)))
+
+reorder_dat <- function(dat, null_mat = FALSE){
+  if(null_mat){
+    index_mat <- matrix(c(1,2,4,3,
+                          2,1,3,4),
+                        2, 4, byrow = TRUE)
+    test_choice <- sample(1:4, 100, TRUE)
+  }else{
+    index_mat <- matrix(c(1,2,3,4,
+                          2,1,4,3), 
+                        2, 4, byrow = TRUE)
+    test_choice <- sample(1:2, 100, TRUE)
+  }
+  for(i in 1:dim(dat)[1]){
+    index_order <- index_mat[round(runif(1)) + 1, ]
+    dat[i,] <- dat[i, index_order]
+  }
+  return(dat)
+}
+
+all_fits <- list()
+for(i in 1:100){
+  print(i)
+  new.dat <- reorder_dat(boot_dat)
+  new.dat <- new.dat[match(phy_bb$tip.label, rownames(new.dat)),]
+  new_lm_dat <- data.frame(d_trans = new.dat[,1] - new.dat[,2],
+                           d_turns = new.dat[,3] - new.dat[,4],
+                           row.names = rownames(new.dat))
+  fit = phylolm(d_turns ~ d_trans, data=new_lm_dat, phy=phy_bb, boot = 1000)
+  all_fits[[i]] <- fit
+}
+
+pdf("plots/random-order-plots.pdf")
+par(mfrow=c(1,2))
+p_vals <- lapply(all_fits, function(x) summary(x)$coefficients[2, 'p.value'])
+hist(unlist(p_vals), main = "Random Order P-values (n=100)", xlab = "p-value")
+abline(v = 0.05, col = "red")
+coefs <- lapply(all_fits, function(x) summary(x)$coefficients[2, 'Estimate'])
+hist(unlist(coefs), main = "Random Order Slope Values (n=100)", xlab = "Slope Estimate"); abline(v = mean((unlist(coefs))), col = "blue")
+dev.off()
+
+subset1 <- boot_dat[, c(1, 3)]
+subset2 <- boot_dat[, c(2, 4)]
+names(subset2) <- names(subset1) <- NULL
+rownames(subset2) <- rownames(subset1) <- NULL
+combined_data <- rbind(as.matrix(subset1), as.matrix(subset2))
+
+plot(combined_data)
+lm_fit <- lm(combined_data[,1] ~ combined_data[,2])
+abline(lm_fit)
+summary(lm_fit)
+
 # for bar charts
 bar_dat <- data.frame(row.names = gsub(" .*", "", plot_data[,1]),
                       trans_a = log(rowMeans(rate_class_a_rate)),
@@ -218,7 +277,7 @@ pairwise_comparisons <- pairwise_comparisons %>%
     midpoint = ((as.numeric(group1) + as.numeric(group2)) / 2)
   )
 
-cols <- c("orange", "lightgreen", "darkgreen")
+cols <- c("darkgreen", "lightgreen", "orange")
 
 ggplot() +
   geom_flat_violin(data = long_data, 
