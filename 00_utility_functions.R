@@ -507,69 +507,69 @@ quick_check <- function(model_path){
 }
 
 
-
-"%||%" <- function(a, b) {
-  if (!is.null(a)) a else b
-}
-
-geom_flat_violin <- function(mapping = NULL, data = NULL, stat = "ydensity",
-                             position = "dodge", trim = TRUE, scale = "area",
-                             show.legend = NA, inherit.aes = TRUE, ...) {
-  layer(
-    data = data,
-    mapping = mapping,
-    stat = stat,
-    geom = GeomFlatViolin,
-    position = position,
-    show.legend = show.legend,
-    inherit.aes = inherit.aes,
-    params = list(
-      trim = trim,
-      scale = scale,
-      ...
-    )
-  )
-}
-
-GeomFlatViolin <-
-  ggproto("GeomFlatViolin", Geom,
-          setup_data = function(data, params) {
-            data$width <- data$width %||%
-              params$width %||% (resolution(data$x, FALSE) * 0.9)
-            
-            # ymin, ymax, xmin, and xmax define the bounding rectangle for each group
-            data %>%
-              group_by(group) %>%
-              mutate(ymin = min(y),
-                     ymax = max(y),
-                     xmin = x - width / 2,
-                     xmax = x)
-          },
-          
-          draw_group = function(data, panel_scales, coord) {
-            # Find the points for the line to go all the way around
-            data <- transform(data, 
-                              xmaxv = x,
-                              xminv = x + violinwidth * (xmin - x))
-            
-            # Make sure it's sorted properly to draw the outline
-            newdata <- rbind(plyr::arrange(transform(data, x = xminv), y),
-                             plyr::arrange(transform(data, x = xmaxv), -y))
-            
-            # Close the polygon: set first and last point the same
-            # Needed for coord_polar and such
-            newdata <- rbind(newdata, newdata[1,])
-            
-            ggplot2:::ggname("geom_flat_violin", GeomPolygon$draw_panel(newdata, panel_scales, coord))
-          },
-          
-          draw_key = draw_key_polygon,
-          
-          default_aes = aes(weight = 1, colour = "grey20", fill = "white", size = 0.5,
-                            alpha = NA, linetype = "solid"),
-          
-          required_aes = c("x", "y")
-  )
+# 
+# "%||%" <- function(a, b) {
+#   if (!is.null(a)) a else b
+# }
+# 
+# geom_flat_violin <- function(mapping = NULL, data = NULL, stat = "ydensity",
+#                              position = "dodge", trim = TRUE, scale = "area",
+#                              show.legend = NA, inherit.aes = TRUE, ...) {
+#   layer(
+#     data = data,
+#     mapping = mapping,
+#     stat = stat,
+#     geom = GeomFlatViolin,
+#     position = position,
+#     show.legend = show.legend,
+#     inherit.aes = inherit.aes,
+#     params = list(
+#       trim = trim,
+#       scale = scale,
+#       ...
+#     )
+#   )
+# }
+# 
+# GeomFlatViolin <-
+#   ggproto("GeomFlatViolin", Geom,
+#           setup_data = function(data, params) {
+#             data$width <- data$width %||%
+#               params$width %||% (resolution(data$x, FALSE) * 0.9)
+#             
+#             # ymin, ymax, xmin, and xmax define the bounding rectangle for each group
+#             data %>%
+#               group_by(group) %>%
+#               mutate(ymin = min(y),
+#                      ymax = max(y),
+#                      xmin = x - width / 2,
+#                      xmax = x)
+#           },
+#           
+#           draw_group = function(data, panel_scales, coord) {
+#             # Find the points for the line to go all the way around
+#             data <- transform(data, 
+#                               xmaxv = x,
+#                               xminv = x + violinwidth * (xmin - x))
+#             
+#             # Make sure it's sorted properly to draw the outline
+#             newdata <- rbind(plyr::arrange(transform(data, x = xminv), y),
+#                              plyr::arrange(transform(data, x = xmaxv), -y))
+#             
+#             # Close the polygon: set first and last point the same
+#             # Needed for coord_polar and such
+#             newdata <- rbind(newdata, newdata[1,])
+#             
+#             ggplot2:::ggname("geom_flat_violin", GeomPolygon$draw_panel(newdata, panel_scales, coord))
+#           },
+#           
+#           draw_key = draw_key_polygon,
+#           
+#           default_aes = aes(weight = 1, colour = "grey20", fill = "white", size = 0.5,
+#                             alpha = NA, linetype = "solid"),
+#           
+#           required_aes = c("x", "y")
+#   )
 
 
 FilterWCVP_genus <- function(points, all_vars, twgd_data, lon="decimalLongitude", lat="decimalLatitude") {
@@ -892,4 +892,207 @@ Thinning <- function(points, species="species", lat = "decimalLatitude", lon="de
   return(results)
 }
 
+
+placeImageAtPoint <- function(img, points, pointName, imgWidth = 1, imgHeight = 1) {
+  # Find the point by name
+  pointRow <- which(rownames(points) == pointName)
+  if(length(pointRow) == 0) {
+    stop("Point name not found")
+  }
+  
+  # Original point coordinates
+  origX <- points[pointRow, 1]
+  origY <- points[pointRow, 2]
+  
+  # Print the coordinates
+  cat("Coordinates of", pointName, ": (", origX, ",", origY, ")\n")
+  
+  # Prompt for a click
+  cat("Please click where you want to place the image for", pointName, "\n")
+  loc <- locator(1)
+  
+  # Connect the original point to the image center with a dashed black line
+  segments(origX, origY, loc$x, loc$y, col = "black", lty = 2)
+  
+  # Calculate corners to center the image on the click
+  left <- loc$x - imgWidth / 2
+  bottom <- loc$y - imgHeight / 2
+  right <- loc$x + imgWidth / 2
+  top <- loc$y + imgHeight / 2
+  
+  # Place the image
+  rasterImage(img, left, bottom, right, top)
+  
+  # Place the point's name above the image
+  text(loc$x, top + 0.05 * (top - bottom), labels = pointName, pos = 3)
+}
+
+getCoordsAtClick <- function(){
+  coords <- locator(1)
+  return(coords)
+}
+
+node_labels_custom <- function (text, node, adj = c(0.5, 0.5), frame = "rect", pch = NULL, thermo = NULL, pie = NULL, piecol = NULL, col = "black", bg = "lightblue", horiz = FALSE, width = NULL, height = NULL, border=NULL, offset=0, ...) 
+{
+  lastPP <- get("last_plot.phylo", envir = .PlotPhyloEnv)
+  if (missing(node)) 
+    node <- (lastPP$Ntip + 1):length(lastPP$xx)
+  XX <- lastPP$xx[node] + offset
+  YY <- lastPP$yy[node]
+  BOTHlabels_custom(text, node, XX, YY, adj, frame, pch, thermo, pie, 
+             piecol, col, bg, horiz, width, height, border, ...)
+}
+
+BOTHlabels_custom <- function (text, sel, XX, YY, adj, frame, pch, thermo, pie, piecol, col, bg, horiz, width, height, border,...){
+  if (missing(text)) 
+    text <- NULL
+  if (length(adj) == 1) 
+    adj <- c(adj, 0.5)
+  if (is.null(text) && is.null(pch) && is.null(thermo) && is.null(pie)) 
+    text <- as.character(sel)
+  frame <- match.arg(frame, c("rect", "circle", "none"))
+  args <- list(...)
+  CEX <- if ("cex" %in% names(args)) 
+    args$cex
+  else par("cex")
+  if (frame != "none" && !is.null(text)) {
+    if (frame == "rect") {
+      width <- strwidth(text, units = "inches", cex = CEX)
+      height <- strheight(text, units = "inches", cex = CEX)
+      if ("srt" %in% names(args)) {
+        args$srt <- args$srt%%360
+        if (args$srt == 90 || args$srt == 270) {
+          tmp <- width
+          width <- height
+          height <- tmp
+        }
+        else if (args$srt != 0) 
+          warning("only right angle rotation of frame is supported;\n         try  `frame = \"n\"' instead.\n")
+      }
+      width <- xinch(width)
+      height <- yinch(height)
+      xl <- XX - width * adj[1] - xinch(0.03)
+      xr <- xl + width + xinch(0.03)
+      yb <- YY - height * adj[2] - yinch(0.02)
+      yt <- yb + height + yinch(0.05)
+      rect(xl, yb, xr, yt, col = bg)
+    }
+    if (frame == "circle") {
+      radii <- 0.8 * apply(cbind(strheight(text, units = "inches", 
+                                           cex = CEX), strwidth(text, units = "inches", 
+                                                                cex = CEX)), 1, max)
+      symbols(XX, YY, circles = radii, inches = max(radii), 
+              add = TRUE, bg = bg)
+    }
+  }
+  if (!is.null(thermo)) {
+    parusr <- par("usr")
+    if (is.null(width)) {
+      width <- CEX * (parusr[2] - parusr[1])
+      width <- if (horiz) 
+        width/15
+      else width/40
+    }
+    if (is.null(height)) {
+      height <- CEX * (parusr[4] - parusr[3])
+      height <- if (horiz) 
+        height/40
+      else height/15
+    }
+    if (is.vector(thermo) || ncol(thermo) == 1) 
+      thermo <- cbind(thermo, 1 - thermo)
+    thermo <- if (horiz) 
+      width * thermo
+    else height * thermo
+    if (is.null(piecol)) 
+      piecol <- rainbow(ncol(thermo))
+    xl <- XX - width/2 + adj[1] - 0.5
+    xr <- xl + width
+    yb <- YY - height/2 + adj[2] - 0.5
+    yt <- yb + height
+    if (horiz) {
+      rect(xl, yb, xl + thermo[, 1], yt, border = NA, col = piecol[1])
+      for (i in 2:ncol(thermo)) rect(xl + rowSums(thermo[, 1:(i - 1), drop = FALSE]), yb, xl + rowSums(thermo[, 1:i]), yt, border = NA, col = piecol[i])
+    }
+    else {
+      rect(xl, yb, xr, yb + thermo[, 1], border = NA, col = piecol[1])
+      for (i in 2:ncol(thermo)) rect(xl, yb + rowSums(thermo[, 1:(i - 1), drop = FALSE]), xr, yb + rowSums(thermo[, 1:i]), border = NA, col = piecol[i])
+    }
+    s <- apply(thermo, 1, function(xx) any(is.na(xx)))
+    xl[s] <- xr[s] <- NA
+    rect(xl, yb, xr, yt, border = "black")
+    if (!horiz) {
+      segments(xl, YY, xl - width/5, YY)
+      segments(xr, YY, xr + width/5, YY)
+    }
+  }
+  if (!is.null(pie)) {
+    if (is.data.frame(pie)) 
+      pie <- as.matrix(pie)
+    if (is.vector(pie) || ncol(pie) == 1) 
+      pie <- cbind(pie, 1 - pie)
+    xrad <- CEX * diff(par("usr")[1:2])/50
+    xrad <- rep(xrad, length(sel))
+    XX <- XX + adj[1] - 0.5
+    YY <- YY + adj[2] - 0.5
+    for (i in seq_along(sel)) {
+      if (any(is.na(pie[i, ]))) 
+        next
+      floating.pie.asp_custom(XX[i], YY[i], pie[i, ], radius = xrad[i], 
+                       col = piecol, border = border)
+    }
+  }
+  if (!is.null(text)) 
+    text(XX, YY, text, adj = adj, col = col, ...)
+  if (!is.null(pch)) 
+    points(XX + adj[1] - 0.5, YY + adj[2] - 0.5, pch = pch, 
+           col = col, bg = bg, ...)
+}
+
+floating.pie.asp_custom <- function (xpos, ypos, x, edges = 200, radius = 1, col = NULL, startpos = 0, border, ...){
+  u <- par("usr")
+  user.asp <- diff(u[3:4])/diff(u[1:2])
+  p <- par("pin")
+  inches.asp <- p[2]/p[1]
+  asp <- user.asp/inches.asp
+  if (!is.numeric(x) || any(is.na(x) | x < 0)) 
+    stop("floating.pie: x values must be non-negative")
+  x <- c(0, cumsum(x)/sum(x))
+  dx <- diff(x)
+  nx <- length(dx)
+  col <- if (is.null(col)) 
+    rainbow(nx)
+  else rep_len(col, nx)
+  if (length(i <- which(dx == 1))) {
+    symbols(xpos, ypos, circles = radius, inches = FALSE, 
+            add = TRUE, fg = par("fg"), bg = col[i])
+  }
+  else {
+    bc <- 2 * pi * (x[1:nx] + dx/2) + startpos
+    for (i in seq_len(nx)) {
+      n <- max(2, floor(edges * dx[i]))
+      t2p <- 2 * pi * seq(x[i], x[i + 1], length = n) + 
+        startpos
+      xc <- c(cos(t2p) * radius + xpos, xpos)
+      yc <- c(sin(t2p) * radius * asp + ypos, ypos)
+      polygon(xc, yc, col = col[i], border=border, ...)
+    }
+  }
+}
+
+quickCol <- function(col, alpha){
+  tmp <- c(col2rgb(col, alpha))/255
+  out <- rgb(tmp[1], tmp[2], tmp[3], tmp[4])
+  return(out)
+}
+
+axisPhylo_custom <- function(H){
+  lastPP <- get("last_plot.phylo", envir = .PlotPhyloEnv)
+  
+  lastPP$xx[lastPP$Ntip+1]
+  lastPP$yy[lastPP$Ntip+1]
+  segments(xa, ya, x, y)
+  text(xa, ya, r0 - r, srt = srt, adj = c(0.5,1.1), ...)
+  
+}
 

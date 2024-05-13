@@ -1,5 +1,6 @@
 # rm(list=ls())
 setwd("/Users/tvasc/Desktop/biome_shifts")
+# setwd("biome_shifts/")
 
 library(ggplot2)
 library(data.table)

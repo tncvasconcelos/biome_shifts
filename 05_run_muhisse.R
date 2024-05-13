@@ -7,20 +7,20 @@ library(parallel)
 library(partitions)
 
 # Load trees
-all_trees_files <- list.files("4_organized_trees_geohisse/")
+all_trees_files <- list.files("4_organized_trees_muhisse/")
 all_trees <- list()
 for(i in 1:length(all_trees_files)){
-  load(paste0("4_organized_trees_geohisse/",all_trees_files[i]))
+  load(paste0("4_organized_trees_muhisse/",all_trees_files[i]))
   pruned_tree$tip.label <- gsub(" ","_",pruned_tree$tip.label)
   all_trees[[i]] <- pruned_tree
   names(all_trees)[i] <- gsub(".Rsave","",all_trees_files[i])
 }
 
 # Load datasets
-all_area_files <- list.files("3_organized_datasets_geohisse/")
+all_area_files <- list.files("3_organized_datasets_muhisse/")
 all_areas <- list()
 for(i in 1:length(all_area_files)){
-  load(paste0("3_organized_datasets_geohisse/",all_area_files[i]))
+  load(paste0("3_organized_datasets_muhisse/",all_area_files[i]))
   all_areas[[i]] <-  habitats_subset
   names(all_areas)[i] <- gsub("_area_score.Rsave","",all_area_files[i])
 }
@@ -149,8 +149,8 @@ run_single_model <- function(dat, phy, sf, index_row, ef_1, ef_2, turn_1, turn_2
   return(out)
 }
 # Preparing data - areas have to be as 0 (11 - widespread), 
-# 1 (10, endemic of first area) 
-# and 2 (01, endemic of second area
+# 1 (10, endemic of closed) 
+# and 2 (01, endemic of open)
 # we change the data to be:
 # 
 for(i in seq_len(length(state_list))){
