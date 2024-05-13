@@ -105,8 +105,8 @@ big_tree <- readRDS("taxized_GBMB.Rdata")
 big_tree$tip.label <- unname(big_tree$tip.label)
 big_tree$tip.label <- simplify.names.taxize(big_tree$tip.label)
 
-clade_trees_files <- list.files("2.1_trees", full.names=T)
-labels <- gsub(paste0(c("2.1_trees/",".Rsave"), collapse="|"),"", clade_trees_files)
+clade_trees_files <- list.files("2_trees", full.names=T)
+labels <- gsub(paste0(c("2_trees/",".Rsave"), collapse="|"),"", clade_trees_files)
 
 all_trees <- list()
 for(i in 1:length(clade_trees_files)){
@@ -120,6 +120,9 @@ for(i in 1:length(all_trees)){
   one_label <- names(all_trees)[i]
   one_tree_tip_labels <- all_trees[[i]]
   one_tree_tip_labels <- simplify.names.taxize(one_tree_tip_labels)
+  one_tree_tip_labels <- subset(one_tree_tip_labels,!is.na(one_tree_tip_labels))
+  one_tree_tip_labels <- subset(one_tree_tip_labels, !grepl("Error",one_tree_tip_labels))
+  one_tree_tip_labels <- subset(one_tree_tip_labels, !one_tree_tip_labels%in%"tip_to_drop")
   if(one_label=="Lobelioideae-Lagomarsino_et_al-2017") {
      tips_to_keep_tmp <-  grep("Lobelia", big_tree$tip.label)
     } else {
