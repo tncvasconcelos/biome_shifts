@@ -1731,3 +1731,20 @@ find_centroid <- function(x, y){
   Cy <- sum(Cy)/(6*A)
   return(c(Cx, Cy))
 }
+
+rescale_vector <- function(v, min_new, max_new) {
+  min_old <- min(v)
+  max_old <- max(v)
+  v_rescaled <- min_new + (v - min_old) * (max_new - min_new) / (max_old - min_old)
+  return(v_rescaled)
+}
+
+
+make_less_vibrant <- function(colors, saturation_decrease = 0.5, brightness_decrease = 0.9) {
+  a <- col2rgb(colors) / 255
+  b <- apply(a, 2, function(x) 
+    rgb2hsv(x[1], x[2], x[3], 1))
+  c <- apply(b, 2, function(x) 
+    hsv(x[1], x[2]*saturation_decrease, x[3]*brightness_decrease))
+  return(c)
+}

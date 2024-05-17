@@ -498,7 +498,7 @@ dev.off()
 ### ancestral states by time plot!!
 ##############################
 
-bins <- seq(from=0, to=130, by=2.5)
+bins <- seq(from=0, to=130, by=5)
 recon_by_time <- list()
 for(i in seq_along(clade_names_recon)){
   focal_tips <- rowSums(all_model_list[[i]][[1]]$data[,c(2,3)]) + 1
@@ -506,6 +506,9 @@ for(i in seq_along(clade_names_recon)){
   focal_recon <- all_mod_avg_recon[[i]]$recon
   focal_subtree <- all_mod_avg_recon[[i]]$phy
   focal_times <- branching.times(focal_subtree)
+  # remove root state
+  focal_recon <- focal_recon[-1,]
+  focal_times <- focal_times[-1]
   out <- c()
   for(j in 2:length(bins)){
     focal_bin <- bins[c(j,j-1)]
@@ -525,16 +528,86 @@ names(recon_by_time) <- clade_names_recon
 brew_col <- brewer.pal(9, "Set1")[c(3,6,5)]
 cols <- setNames(brew_col, c("closed", "widespread", "open"))
 
-par(mfrow=c(1,3))
-barplot(log(t(recon_by_time[[1]]+1)), col=cols, horiz = T, main = names(recon_by_time)[1])
-barplot(log(t(recon_by_time[[2]]+1)), col=cols, horiz = T, main = names(recon_by_time)[2])
-barplot(log(t(recon_by_time[[3]]+1)), col=cols, horiz = T, main = names(recon_by_time)[3])
+dat_abs <- Reduce("+", recon_by_time)
+dat_prop <- t(dat_abs/rowSums(dat_abs))
+dat_prop <- dat_prop[,!is.nan(colSums(dat_prop))]
+dat_prop <- dat_prop[,ncol(dat_prop):1]
 
-par(mfrow=c(1,3))
-barplot(t(recon_by_time[[1]]/rowSums(recon_by_time[[1]])), col=cols, horiz = T, main = names(recon_by_time)[1])
-barplot(t(recon_by_time[[2]]/rowSums(recon_by_time[[2]])), col=cols, horiz = T, main = names(recon_by_time)[2])
-barplot(t(recon_by_time[[3]]/rowSums(recon_by_time[[3]])), col=cols, horiz = T, main = names(recon_by_time)[3])
+dat_scaled <- t(log10(dat_abs+1))/4
+dat_scaled <- dat_scaled[,colSums(dat_scaled)!=0]
+dat_scaled <- dat_scaled[,ncol(dat_scaled):1]
 
+###### plotting
+
+dev.off()
+cols_mod <- make_less_vibrant(cols, 0.75, 1)
+par(mar=c(0,0,.5,0))
+barplot(dat_prop, 
+        col=cols_mod, 
+        axes=FALSE, ann=FALSE, axisnames=FALSE, 
+        space = 0,
+        ylim = c(-.3, 1.1), 
+        xlim = c(-3.5, ncol(dat_prop)+3.5))
+
+points(x = 1:ncol(dat_scaled)-.5, 
+       y = dat_scaled[1,], 
+       pch = 16, col = "white", cex = 2)
+
+points(x = 1:ncol(dat_scaled)-.5, 
+       y = dat_scaled[2,], 
+       pch = 16, col = "white", cex = 2)
+
+points(x = 1:ncol(dat_scaled)-.5, 
+       y = dat_scaled[3,], 
+       pch = 16, col = "white", cex = 2)
+
+points(x = 1:ncol(dat_scaled)-.5, 
+       y = dat_scaled[1,], 
+       pch = 21, bg = cols[1], cex=1.5)
+
+points(x = 1:ncol(dat_scaled)-.5, 
+       y = dat_scaled[2,], 
+       pch = 21, bg = cols[2], cex=1.5)
+
+points(x = 1:ncol(dat_scaled)-.5, 
+       y = dat_scaled[3,], 
+       pch = 21, bg = cols[3], cex=1.5)
+
+
+# axes lines
+lines(x = c(0, ncol(dat_prop)), y = c(-.05,-.05), lwd=2)
+# custom x
+ticks_x <- 0:ncol(dat_prop)
+segments(x0 = ticks_x, y0 = -0.05, x1 = ticks_x, y1 = -0.06) 
+text(x = ticks_x, y = -0.075, 
+     labels = c(c("110"), colnames(dat_prop)), 
+     srt = 45, adj = 1)
+text(x = mean(ticks_x), y = -.15, labels = "Age (MY)", 
+     srt = 0, adj = 0.5, xpd = TRUE)
+
+# custom y
+# left side
+ticks_y <- c(0, 2.5, 5, 7.5, 10)/10
+segments(x0 = -1, y0 = min(ticks_y), 
+         x1 = -1, y1 = max(ticks_y))
+segments(x0 = -1, y0 = ticks_y, 
+         x1 = -1.1, y1 = ticks_y)
+text(x = -1.15, y = ticks_y, labels = ticks_y, 
+     srt = 0, adj = 1, xpd = TRUE)
+text(x = -3, y = mean(ticks_y), labels = "Proportion", 
+     srt = 90, adj = 0.5, xpd = TRUE)
+
+# right side
+ticks_y <- seq(from=0, to=10, length.out=5)/10
+segments(x0 = ncol(dat_prop)+1, y0 = min(ticks_y), 
+         x1 = ncol(dat_prop)+1, y1 = max(ticks_y))
+segments(x0 = ncol(dat_prop)+1, y0 = ticks_y, 
+         x1 = ncol(dat_prop)+1.1, y1 = ticks_y)
+labels <- c(0,10,100,1000,10000)
+text(x = ncol(dat_prop)+1.15, y = ticks_y, labels = labels, 
+     srt = 0, adj = 0, xpd = TRUE)
+text(x = ncol(dat_prop)+3, y = mean(ticks_y), labels = "Raw Number", 
+     srt = 90, adj = 0.5, xpd = TRUE)
 
 # states <- phy_bb$node.label
 # 
@@ -561,4 +634,5 @@ barplot(t(recon_by_time[[3]]/rowSums(recon_by_time[[3]])), col=cols, horiz = T, 
 # par(mfrow=c(1,2))
 # barplot(scaled_out, col=cols, horiz = T)
 # barplot(log(t(out)) + 1, col=cols, horiz = T)
+
 
