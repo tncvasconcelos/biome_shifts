@@ -8,12 +8,15 @@ library(parallel)
 library(phytools)
 library(phylolm)
 library(phytools)
+library(RColorBrewer)
 
 ##############################
 ### load data
 ##############################
 
 plot_data <- read.csv("all_par_table.csv")
+plot_data <- plot_data[plot_data$Group != "Quercus",]
+
 
 ##############################
 ### correcting tip labels
@@ -121,7 +124,7 @@ abline(a = 0, b = slope_ci[2], col = "lightblue", lty = "dashed")
 
 # add points
 points(x = lm_dat$d_trans, y = lm_dat$d_turns,
-       pch = 21, bg = rgb(1, 0, 0, 0.5), cex=1.5)
+       pch = 21, bg = "lightgrey", cex=1.5)
 
 # add outlier titles
 # for(i in 1:nrow((outlier_points))){
@@ -186,6 +189,7 @@ points(x = rep(4, dim(bar_dat)[1]) + rnorm(dim(bar_dat)[1], sd = 0.05),
 
 # finished model sets for particular datsets
 to_load <- dir("5_results/", full.names = TRUE)
+to_load <- to_load[-grep("Quercus", to_load)]
 
 all_model_list <- list()
 for(i in 1:length(to_load)){
@@ -199,8 +203,10 @@ clade_names <- unlist(lapply(strsplit(clade_names, "-"), function(x) x[[1]]))
 clade_names <- unlist(lapply(strsplit(clade_names, "_"), function(x) x[[1]]))
 # clade_names <- paste0(clade_names, " (", n_tips, ")")
 clade_names_res <- clade_names
+names(all_model_list) <- clade_names_res
 
 to_load <- dir("6_recons/", full.names = TRUE)
+to_load <- to_load[-grep("Quercus", to_load)]
 
 all_recon_list <- list()
 for(i in 1:length(to_load)){
@@ -212,7 +218,7 @@ clade_names <- unlist(lapply(strsplit(to_load, "recon_"), function(x) gsub(".RDa
 clade_names <- unlist(lapply(strsplit(clade_names, "-"), function(x) x[[1]]))
 clade_names <- unlist(lapply(strsplit(clade_names, "_"), function(x) x[[1]]))
 clade_names_recon <- clade_names
-all(match(clade_names_recon, clade_names_res) == 1:51)
+all(match(clade_names_recon, clade_names_res) == 1:50)
 
 # the calculation
 aic_table <- do.call(rbind, lapply(all_model_list, GetAICWeights))
@@ -250,15 +256,16 @@ for(i in 1:length(all_recon_list)){
 
 names(all_mod_avg_recon) <- clade_names_recon
 clade_table <- read.csv("clade_size_age_major_group.csv")
+clade_table <- clade_table[clade_table$sp != "Quercus",]
 rownames(clade_table) <- clade_table$sp
 clade_table <- clade_table[clade_names_recon,]
 ages <- unlist(lapply(all_mod_avg_recon, function(x) max(branching.times(x$phy))))
 ntips <- unlist(lapply(all_mod_avg_recon, function(x) Ntip(x$phy)))
-cols <- setNames(c('darkgreen', 'greenyellow', 'orange'), 
-                 c("closed", "widespread", "open"))
+brew_col <- brewer.pal(9, "Set1")[c(3,6,5)]
+cols <- setNames(brew_col, c("closed", "widespread", "open"))
 
 ##### set focal clade
-focal_clade <- "asterids"
+focal_clade <- "monocot"
 clade_index <- clade_table[,1] == focal_clade
 names(clade_index) <- clade_names_recon
 focal_ages <- sort(ages[clade_index], TRUE)
@@ -311,73 +318,247 @@ dev.off()
 ##############################
 ### ONE BIG ancestral states plot!!
 ##############################
-
 phy_bb <- read.tree("backbone_tree.tre")
 dat_names <- unlist(lapply(strsplit(paste(plot_data$Group), " "), function(x) x[[1]]))
 phy_bb$tip.label <- unlist(lapply(strsplit(phy_bb$tip.label, "-"), function(x) x[[1]]))
 phy_bb$tip.label <- unlist(lapply(strsplit(phy_bb$tip.label, "_"), function(x) x[[1]]))
 to_drop <- phy_bb$tip.label[!phy_bb$tip.label %in% dat_names]
 phy_bb <- drop.tip(phy_bb, to_drop)
+phy_bb <- ladderize(phy_bb,right = F)
 tip_names <- phy_bb$tip.label
+phy_bb <- force.ultrametric(phy_bb)
 
 names(all_mod_avg_recon) <- clade_names_recon
-clade_table <- read.csv("clade_size_age_major_group.csv")
-rownames(clade_table) <- clade_table$sp
-all(clade_names_recon %in% phy_bb$tip.label)
-all(phy_bb$tip.label %in% clade_names_recon)
-
+# clade_table <- read.csv("clade_size_age_major_group.csv")
+# rownames(clade_table) <- clade_table$sp
+# all(clade_names_recon %in% phy_bb$tip.label)
+# all(phy_bb$tip.label %in% clade_names_recon)
+clade_names_sorted <- phy_bb$tip.label
 #some meta data
 clade_table <- clade_table[clade_names_recon,]
 ages <- unlist(lapply(all_mod_avg_recon, function(x) max(branching.times(x$phy))))
 ntips <- unlist(lapply(all_mod_avg_recon, function(x) Ntip(x$phy)))
-cols <- setNames(c('darkgreen', 'greenyellow', 'orange'), 
-                 c("closed", "widespread", "open"))
-bb_ages <- branching.times(phy)
-clade_inits <- c()
-for (i in seq_along(clade_names_recon)) {
-  tip_label <- clade_names_recon[i]
-  tip_index <- which(phy_bb$tip.label == tip_label)
-  node_label <- phy_bb$edge[tip_index,1]
-  init_age <- bb_ages[grep(node_label, names(bb_ages))]
-  clade_inits <- c(clade_inits, init_age)
-}
-names(clade_inits) <- clade_names_recon
-clade_inits <- max(bb_ages) - clade_inits
+brew_col <- brewer.pal(9, "Set1")[c(3,6,5)]
+cols <- setNames(brew_col, c("closed", "widespread", "open"))
+# bb_ages <- branching.times(phy_bb)
+# clade_inits <- c()
+# for (i in seq_along(clade_names_recon)) {
+#   tip_label <- clade_names_recon[i]
+#   tip_index <- which(phy_bb$tip.label == tip_label)
+#   node_label <- phy_bb$edge[tip_index,1]
+#   init_age <- bb_ages[grep(node_label, names(bb_ages))]
+#   clade_inits <- c(clade_inits, init_age)
+# }
+# names(clade_inits) <- clade_names_recon
+# clade_inits <- max(bb_ages) - clade_inits
 
 for (i in seq_along(clade_names_recon)) {
   tip_label <- clade_names_recon[i]
   tip_index <- which(phy_bb$tip.label == tip_label)
   subtree <- all_mod_avg_recon[[tip_label]]$phy
   subtree$node.label <- apply(all_mod_avg_recon[[tip_label]]$recon, 1, which.max)
+  subtree <- ladderize(subtree, right=FALSE)
   edge_len  <- (phy_bb$edge.length[phy_bb$edge[,2] == tip_index]) - ages[i]
+  if(edge_len < 0){
+    edge_len <- (phy_bb$edge.length[phy_bb$edge[,2] == tip_index])
+    subtree$edge.length <- subtree$edge.length/ages[i]*(edge_len-1)
+    edge_len <- 1
+  }
   phy_bb$edge.length[phy_bb$edge[,2] == tip_index] <- edge_len
   phy_bb <- bind.tree(phy_bb, subtree, where = tip_index)
+}
+
+C <- vcv(phy_bb)
+dC <- diag(C)
+H <- max(branching.times(phy_bb))
+# make everything ultrametric 
+for(i in 1:Ntip(phy_bb)){
+  to_add <- H - dC[i]
+  index <- phy_bb$edge[,2] == i
+  phy_bb$edge.length[index] <- phy_bb$edge.length[index] + to_add
 }
 
 bb_node_index <- Ntip(phy_bb) + which(is.na(phy_bb$node.label))
 edges_to_shade <- match(phy_bb$edge[,1], bb_node_index)
 edges_to_shade <- !is.na(edges_to_shade)
 edge_lty <- rep(1, dim(phy_bb$edge)[1])
-edge_lty[edges_to_shade] <- 2
-plot.phylo(x = phy_bb, 
-           show.tip.label = FALSE, 
-           type = "fan", 
-           edge.width = 0.25,
-           edge.lty =  edge_lty, 
-           edge.color = c("#444444", "darkgrey")[edge_lty], 
-           no.margin = TRUE,
-           open.angle = 10,
-           rotate.tree = 275)
-axisPhylo()
-# abline(v = 0)
-scale_init <- -max(branching.times(phy_bb)) + 150
-scale_fin <- -max(branching.times(phy_bb))
-segments(x0=0, y0 = -scale_init,
-         x1=0, y1 = scale_fin)
+edge_lty[edges_to_shade] <- 3
+edge_col <- rep("black", dim(phy_bb$edge)[1])
+for(i in 1:nrow(phy_bb$edge)){
+  focal_edge <- phy_bb$edge[i,]
+  focal_state <- phy_bb$node.label[focal_edge[1] - Ntip(phy_bb)]
+  if(!is.na(focal_state)){
+    edge_col[i] <- cols[focal_state]
+  }
+}
 
-nodelabels(pch = 16, 
-           col = cols[phy_bb$node.label], 
-           cex = 0.2)
+# # # # # # # #actualy plotting
+pdf(file="plots/all_clade_asr.pdf", width = 10, height = 10)
+
+H <- 150
+root_length <- H - max(branching.times(phy_bb))
+phy_bb$root.edge <- root_length
+plot.phylo_custom(x = phy_bb, 
+                  show.tip.label = FALSE, 
+                  type = "fan", 
+                  edge.width = 0.25,
+                  edge.lty =  edge_lty, 
+                  edge.color = c(edge_col), 
+                  no.margin = TRUE,
+                  open.angle = 15, 
+                  rotate.tree = 8.5,
+                  root.edge = TRUE,
+                  plot=FALSE)
+
+# Define shades of grey
+greys <- brewer.pal(9, "Greys")[1:6]
+
+# Draw concentric filled circles (segments)
+# geo_segments <- setNames(c(145, 100, 66, 23, 2.6), 
+#                          nm = c("jurassic", "early cretaceous", "late cretaceous", "paleogene", "neogene"))
+geo_segments <- setNames(c(145, 66, 23, 2.6, 0), 
+                         nm = c("jurassic", "cretaceous", "paleogene", "neogene", "quaternary"))
+geo_segments <- 150 - rev(geo_segments)
+
+draw_circle(geo_segments[1], greys[5])
+draw_circle(geo_segments[2], greys[4])
+draw_circle(geo_segments[3], greys[3])
+draw_circle(geo_segments[4], greys[2])
+draw_circle(geo_segments[5], greys[1])
+
+primary_ticks <- H - seq(from = 0, to = H, by = 50)
+secondary_ticks <- H -seq(from = 0, to = H, by = 10)
+tertiary_ticks <- H -seq(from = 0, to = H, by = 1)
+labels <- seq(from = 0, to = H, by = 50)
+
+segments(y0=-1, x0 = 0,
+         y1=-1, x1 = max(tertiary_ticks))
+
+segments(y0=-1, x0 = primary_ticks,
+         y1=-5, x1 = primary_ticks)
+
+segments(y0=-1, x0 = secondary_ticks,
+         y1=-3.5, x1 = secondary_ticks)
+
+segments(y0=-1, x0 = tertiary_ticks,
+         y1=-2, x1 = tertiary_ticks)
+
+text(y = -9, x = primary_ticks, labels = labels, cex = 0.5)
+tmp <- data.frame(init = geo_segments[-c(1,5)], 
+                  end = c(geo_segments[3:4],0))
+x_pos <- rowMeans(tmp)
+text(y = 2, x = x_pos, labels = names(x_pos), cex = 0.6)
+
+# add polygons
+pp <- get("last_plot.phylo", envir = .PlotPhyloEnv)
+tip_coord <- data.frame(x = pp$xx[1:Ntip(phy_bb)], 
+                        y = pp$yy[1:Ntip(phy_bb)])
+# Generate a palette
+palette <- brewer.pal(12, "Set3")
+colors <- rep(palette, length.out = 51)
+# colors <- viridis::rocket(51)
+for (i in seq_along(clade_names_sorted)) {
+  # Sys.sleep(.2)
+  tip_label <- clade_names_sorted[i]
+  subtree <- all_mod_avg_recon[[tip_label]]$phy
+  focal_tips <- which(phy_bb$tip.label %in% subtree$tip.label)
+  tip_states <- rowSums(all_model_list[[tip_label]][[1]]$data[,c(2,3)]) + 1
+  names(tip_states) <- all_model_list[[tip_label]][[1]]$data[,1]
+  if(length(tip_states)!=length(focal_tips)){
+    print(tip_label)
+    next
+  }
+  tip_coords <- getPolygonCoords(tip_coord, 1.005, 1.02, focal_tips, TRUE)
+  tip_coords$col <- cols[tip_states]
+  poly_coords <- getPolygonCoords(tip_coord, 1.0275, 1.05, focal_tips)
+  num_coords <- find_centroid(poly_coords[,1], poly_coords[,2])
+  num_coords <- num_coords * 161/sqrt(sum(num_coords^2))
+  for(j in 1:nrow(tip_coords)){
+    tmp <- tip_coords[j,]
+    segments(tmp[1,1], tmp[1,2], tmp[1,3], tmp[1,4], tmp[1,5], lwd=0.25)
+  }
+  polygon(poly_coords, col = colors[i], border = 'black')
+  points(num_coords[1], num_coords[2], pch = 21, bg = colors[i], cex = 1.75)
+  text(num_coords[1], num_coords[2], labels = i, cex = 0.5, adj = 0.5)
+}
+
+plot.phylo_custom(x = phy_bb,
+                  show.tip.label = FALSE,
+                  type = "fan",
+                  edge.width = 0.25,
+                  edge.lty =  edge_lty,
+                  edge.color = c(edge_col),
+                  no.margin = TRUE,
+                  open.angle = 15,
+                  root.edge = TRUE,
+                  rotate.tree = 8.5,
+                  add=TRUE)
+dev.off()
+##############################
+### ancestral states by time plot!!
+##############################
+
+bins <- seq(from=0, to=130, by=2.5)
+recon_by_time <- list()
+for(i in seq_along(clade_names_recon)){
+  focal_tips <- rowSums(all_model_list[[i]][[1]]$data[,c(2,3)]) + 1
+  names(focal_tips) <- all_model_list[[i]][[1]]$data[,1]
+  focal_recon <- all_mod_avg_recon[[i]]$recon
+  focal_subtree <- all_mod_avg_recon[[i]]$phy
+  focal_times <- branching.times(focal_subtree)
+  out <- c()
+  for(j in 2:length(bins)){
+    focal_bin <- bins[c(j,j-1)]
+    index <- focal_times > focal_bin[2] & focal_bin[1] < focal_times
+    focal_states <- colSums(matrix(focal_recon[index,], ncol = 3))
+    out <- rbind(out, focal_states)
+  }
+  curr <- c(length(which(focal_tips == 1)),
+            length(which(focal_tips == 2)),
+            length(which(focal_tips == 3)))
+  out <- rbind(curr, out)
+  rownames(out) <- bins
+  recon_by_time[[i]] <- out
+}
+names(recon_by_time) <- clade_names_recon
+
+brew_col <- brewer.pal(9, "Set1")[c(3,6,5)]
+cols <- setNames(brew_col, c("closed", "widespread", "open"))
+
+par(mfrow=c(1,3))
+barplot(log(t(recon_by_time[[1]]+1)), col=cols, horiz = T, main = names(recon_by_time)[1])
+barplot(log(t(recon_by_time[[2]]+1)), col=cols, horiz = T, main = names(recon_by_time)[2])
+barplot(log(t(recon_by_time[[3]]+1)), col=cols, horiz = T, main = names(recon_by_time)[3])
+
+par(mfrow=c(1,3))
+barplot(t(recon_by_time[[1]]/rowSums(recon_by_time[[1]])), col=cols, horiz = T, main = names(recon_by_time)[1])
+barplot(t(recon_by_time[[2]]/rowSums(recon_by_time[[2]])), col=cols, horiz = T, main = names(recon_by_time)[2])
+barplot(t(recon_by_time[[3]]/rowSums(recon_by_time[[3]])), col=cols, horiz = T, main = names(recon_by_time)[3])
 
 
-which(is.na(phy_bb$node.label))
+# states <- phy_bb$node.label
+# 
+# times <- times[!is.na(states)]
+# states <- states[!is.na(states)]
+# 
+# bins <- seq(from=0, to=130, by=2.5)
+# out <- c()
+# for(i in 2:length(bins)){
+#   focal_bin <- bins[c(i,i-1)]
+#   index <- times > focal_bin[2] & focal_bin[1] < times
+#   focal_states <- states[index]
+#   curr <- c(length(which(focal_states == 1)),
+#             length(which(focal_states == 2)),
+#             length(which(focal_states == 3)))
+#   names(curr) <- c(1,2,3)
+#   out <- rbind(out, curr)
+# }
+# rownames(out) <- bins
+# 
+# scaled_out <- apply(out, 1, function(x) x/sum(x))
+# out[out == 0] <- NA
+# out <- out + 1e-10
+# par(mfrow=c(1,2))
+# barplot(scaled_out, col=cols, horiz = T)
+# barplot(log(t(out)) + 1, col=cols, horiz = T)
+
