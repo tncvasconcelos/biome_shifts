@@ -1689,7 +1689,7 @@ draw_circle <- function(radius, col) {
   polygon(x, y, border=NA, col=col) # Draw filled circle with no border
 }
 
-getPolygonCoords <- function(tip_coord, inner_ratio = 1.01, outer_ratio = 1.05, index=NULL, return.df=FALSE){
+getPolygonCoords <- function(tip_coord, inner_ratio = 1.01, outer_ratio = 1.05, index=NULL, return.df=FALSE, order=FALSE){
   if(!is.null(index)){
     tip_coord <- tip_coord[index,]
   }
@@ -1710,12 +1710,17 @@ getPolygonCoords <- function(tip_coord, inner_ratio = 1.01, outer_ratio = 1.05, 
                         y1=extended_y_outer)
     return(xy_df)
   }
-  ixi <- order(extended_x_inner)
-  ixo <- order(extended_x_outer)
-  vertices_x <- c(extended_x_inner[ixi], rev(extended_x_outer[ixo]))
-  vertices_y <- c(extended_y_inner[ixi], rev(extended_y_outer[ixo]))
+  if(order){
+    ixi <- order(extended_x_inner)
+    ixo <- order(extended_x_outer)
+    vertices_x <- c(extended_x_inner[ixi], rev(extended_x_outer[ixo]))
+    vertices_y <- c(extended_y_inner[ixi], rev(extended_y_outer[ixo]))
+  }else{
+    vertices_x <- c(extended_x_inner, rev(extended_x_outer))
+    vertices_y <- c(extended_y_inner, rev(extended_y_outer))
+  }
   poly_coords <- data.frame(vertices_x=vertices_x, vertices_y=vertices_y)
-  poly_coords <- rbind(poly_coords, poly_coords[1,])
+  # poly_coords <- rbind(poly_coords, poly_coords[1,])
   return(poly_coords)
 }
 

@@ -49,6 +49,13 @@ rate_class_a_turn <- cbind(plot_data$tn_00_a,
 rate_class_b_turn <- cbind(plot_data$tn_00_b,
                            plot_data$tn_01_b,
                            plot_data$tn_11_b)
+obs_00_turn <- cbind(plot_data$tn_00_a,
+                     plot_data$tn_00_b)
+obs_01_turn <- cbind(plot_data$tn_01_a,
+                     plot_data$tn_01_b)
+obs_11_turn <- cbind(plot_data$tn_11_a,
+                     plot_data$tn_11_b)
+
 
 # scatter plot of diff
 lm_dat <- data.frame(row.names = gsub(" .*", "", plot_data[,1]),
@@ -64,8 +71,16 @@ bar_dat <- data.frame(row.names = gsub(" .*", "", plot_data[,1]),
                       turns_a = log(rowMeans(rate_class_a_turn)),
                       turns_b = log(rowMeans(rate_class_b_turn)))
 
+# for obs turnover
+obs_dat <- data.frame(row.names = gsub(" .*", "", plot_data[,1]),
+                      turns_00 = log(rowMeans(obs_00_turn)),
+                      turns_01 = log(rowMeans(obs_01_turn)),
+                      turns_11 = log(rowMeans(obs_01_turn)))
+
+
 lm_dat <- lm_dat[phy_bb$tip.label,]
 bar_dat <- bar_dat[phy_bb$tip.label,]
+obs_dat <- obs_dat[phy_bb$tip.label,]
 
 # plot(lm_dat)
 # boxplot(bar_dat)
@@ -82,16 +97,17 @@ outlier_points <- lm_dat[outliers,c(1,2)]
 
 # begin custom regression plot
 dev.off()
+pdf("plots/trans-turn-regression-color.pdf", width = 10, height=7)
 plot.new()
 # Set up the full plot area
 par(fig=c(0, 1, 0, 1), mar=c(.1,.1,.1,.1), new=TRUE)
 plot(type="n", x = lm_dat$d_trans, y = lm_dat$d_turns, bty='n',
      xaxt='n', yaxt='n', xlab = "", ylab = "", 
-     xlim=range(lm_dat$d_trans)+c(0, max(lm_dat$d_trans)*.2))
+     xlim=range(lm_dat$d_trans))
 grid()
 # axes lines
-lines(x = round(c(min(lm_dat$d_trans), max(lm_dat$d_trans))), y = c(0, 0))
-lines(x = c(0, 0), y = round(c(min(lm_dat$d_turns), max(lm_dat$d_turns))))
+lines(x = round(c(min(lm_dat$d_trans), max(lm_dat$d_trans))), y = c(0, 0), lwd=2)
+lines(x = c(0, 0), y = round(c(min(lm_dat$d_turns), max(lm_dat$d_turns))), lwd=2)
 
 # custom x
 ticks_x <- round(seq(from = min(lm_dat$d_trans), to = max(lm_dat$d_trans+1), by = 2))
@@ -118,14 +134,35 @@ y_upper = x_range * slope_ci[2]
 
 polygon(x=c(x_range, rev(x_range)), y=c(y_lower, rev(y_upper)), col=rgb(0.6784314, 0.8470588, 0.9019608, .25), border=NA)
 
-abline(a = 0, b = slope, col = "darkgrey", lwd = 2)
-abline(a = 0, b = slope_ci[1], col = "lightblue", lty = "dashed")  
-abline(a = 0, b = slope_ci[2], col = "lightblue", lty = "dashed")  
+abline(a = 0, b = slope, col = "#737373", lwd = 2)
+abline(a = 0, b = slope_ci[1], col = "#6BAED6", lty = "dashed")  
+abline(a = 0, b = slope_ci[2], col = "#6BAED6", lty = "dashed")  
 
 # add points
-points(x = lm_dat$d_trans, y = lm_dat$d_turns,
-       pch = 21, bg = "lightgrey", cex=1.5)
+palette <- brewer.pal(12, "Set3")
+colors <- rep(palette, length.out = 51)
+# Define the corners of the rectangle
+x1 <- 2; y1 <- -6   # Bottom left
+x2 <- 6; y2 <- -6  # Bottom right
+x3 <- 2; y3 <- -2  # Top left
+x4 <- 6; y4 <- -2 # Top right
+n_col <- 5  # Columns
+n_row <- 10 # Rows
+x_seq <- seq(x1, x2, length.out = n_col)
+y_seq <- seq(y1, y3, length.out = n_row)
+grid_points <- expand.grid(x = x_seq, y = y_seq)
+for(i in seq_along(clade_names_sorted)){
+  points(x = lm_dat$d_trans[i], y = lm_dat$d_turns[i],
+         pch = 21, bg = colors[i], cex=3)
+  text(x = lm_dat$d_trans[i], y = lm_dat$d_turns[i],
+       label=i, cex = .85)
+  # points(x = grid_points$x[i], y = grid_points$y[i],
+  #        pch = 21, bg = colors[i], cex=1)
+  # text(x = grid_points$x[i], y = grid_points$y[i],
+  #      label=clade_names_sorted[i], cex = .25)
+}
 
+dev.off()
 # add outlier titles
 # for(i in 1:nrow((outlier_points))){
 #   text(x = outlier_points[i,1], y = outlier_points[i,2] + 0.3, labels = rownames(outlier_points)[i])
@@ -154,34 +191,62 @@ apply(outlier_points, 1, function(x) placePolygon(x[1], x[2], x[3], x[4], x[5], 
 
 
 # inlaid boxplot
-par(fig=c(0.495, 0.99, 0.05, 0.38), new=TRUE, mar=c(.1, .1, .1, .1))
+# par(fig=c(0.495, 0.99, 0.05, 0.38), new=TRUE, mar=c(.1, .1, .1, .1))
 # dev.off()
+pdf("plots/trans-turn-boxplot.pdf")
 boxplot(bar_dat, main="", xlab="", ylab="", axes=FALSE, outline = FALSE,
-        xlim=c(0, dim(bar_dat)[2]+1.5), ylim=range(bar_dat)*c(1.2,1),
-        col=c("#b10026", "#fc9272", "#034e7b", "#74a9cf"))
-box()
+        col=c("#b10026", "#fc9272", "#034e7b", "#74a9cf"),
+        ylim=range(bar_dat)*c(1.1, 1),
+        xlim=c(-.5,5))
+# box()
 ticks_y <- round(seq(from = min(bar_dat), to = max(bar_dat), by = 2))
-segments(x0 = 4.7, y0 = ticks_y, x1 = 4.9, y1 = ticks_y)
-segments(x0 = 4.8, y0 = min(ticks_y), x1 = 4.8, y1 = max(ticks_y))
-text(x = 5, y = ticks_y, labels = round(ticks_y, 2), 
-     srt = 0, adj = 0, xpd = TRUE, cex=0.75)
-text(x = 5.4, y = mean(range(bar_dat)), labels = expression(log(rate)), srt = 90, adj = 0.5, cex = 1)
-text(x = 1, y = min(bar_dat)*1.18, labels = expression(q[A]))
-text(x = 2, y = min(bar_dat)*1.18, labels = expression(q[B]))
-text(x = 3, y = min(bar_dat)*1.18, labels = expression(tau[A]))
-text(x = 4, y = min(bar_dat)*1.18, labels = expression(tau[B]))
+segments(x0 = 0, y0 = ticks_y, x1 = 0.2, y1 = ticks_y)
+segments(x0 = 0.1, y0 = min(ticks_y), x1 = 0.1, y1 = max(ticks_y))
+text(x = -0.1, y = ticks_y, labels = round(ticks_y, 2), 
+     srt = 0, adj = 1, xpd = TRUE, cex=0.75)
+text(x = -0.35, y = mean(range(bar_dat)), labels = expression(log(rate)), srt = 90, adj = 0.5, cex = 1)
+text(x = 1, y = min(bar_dat)*1.1, labels = expression(q[A]))
+text(x = 2, y = min(bar_dat)*1.1, labels = expression(q[B]))
+text(x = 3, y = min(bar_dat)*1.1, labels = expression(tau[A]))
+text(x = 4, y = min(bar_dat)*1.1, labels = expression(tau[B]))
 points(x = rep(1, dim(bar_dat)[1]) + rnorm(dim(bar_dat)[1], sd = 0.05), 
-       y = bar_dat$trans_a, pch = 21, bg="#b1002690")
+       y = bar_dat$trans_a, pch = 21, bg="#b10026")
 points(x = rep(2, dim(bar_dat)[1]) + rnorm(dim(bar_dat)[1], sd = 0.05), 
-       y = bar_dat$trans_b, pch = 21, bg="#fc927290")
+       y = bar_dat$trans_b, pch = 21, bg="#fc9272")
 points(x = rep(3, dim(bar_dat)[1]) + rnorm(dim(bar_dat)[1], sd = 0.05), 
-       y = bar_dat$turns_a, pch = 21, bg="#034e7b90")
+       y = bar_dat$turns_a, pch = 21, bg="#034e7b")
 points(x = rep(4, dim(bar_dat)[1]) + rnorm(dim(bar_dat)[1], sd = 0.05), 
-       y = bar_dat$turns_b, pch = 21, bg="#74a9cf90")
-
+       y = bar_dat$turns_b, pch = 21, bg="#74a9cf")
+dev.off()
 # Reset to full plot area
 # par(fig=c(0, 1, 0, 1), new=TRUE)
 # rasterImage(img, left, bottom, right, top)
+
+#### observed state transi
+
+pdf("plots/turns-obs-boxplot.pdf")
+brew_col <- brewer.pal(9, "Set1")[c(3,6,5)]
+cols <- setNames(brew_col, c("closed", "widespread", "open"))
+boxplot(obs_dat, main="", xlab="", ylab="", axes=FALSE, outline = FALSE,
+        col=cols, xlim=c(0, 4), ylim=range(obs_dat)*c(1.1, 1))
+# box()
+ticks_y <- round(seq(from = min(obs_dat), to = max(obs_dat), by = 2))
+segments(x0 = 0.32, y0 = ticks_y, x1 = 0.18, y1 = ticks_y)
+segments(x0 = 0.25, y0 = min(ticks_y), x1 = 0.25, y1 = max(ticks_y))
+text(x = 0.15, y = ticks_y, labels = round(ticks_y, 2), 
+     srt = 0, adj = 1, xpd = TRUE, cex=0.75)
+text(x = 0, y = mean(range(obs_dat)), labels = expression(log(tau)), srt = 90, adj = 0.5, cex = 1)
+text(x = 1, y = min(obs_dat)*1.15, labels = expression(C), cex=1)
+text(x = 2, y = min(obs_dat)*1.15, labels = expression(W), cex=1)
+text(x = 3, y = min(obs_dat)*1.15, labels = expression(O), cex=1)
+points(x = rep(1, dim(obs_dat)[1]) + rnorm(dim(obs_dat)[1], sd = 0.05), 
+       y = obs_dat$turns_00, pch = 21, bg=cols[1])
+points(x = rep(2, dim(obs_dat)[1]) + rnorm(dim(obs_dat)[1], sd = 0.05), 
+       y = obs_dat$turns_01, pch = 21, bg=cols[2])
+points(x = rep(3, dim(obs_dat)[1]) + rnorm(dim(obs_dat)[1], sd = 0.05), 
+       y = obs_dat$turns_11, pch = 21, bg=cols[3])
+dev.off()
+
 
 ##############################
 ### model avg ancestral states
@@ -334,6 +399,7 @@ names(all_mod_avg_recon) <- clade_names_recon
 # all(clade_names_recon %in% phy_bb$tip.label)
 # all(phy_bb$tip.label %in% clade_names_recon)
 clade_names_sorted <- phy_bb$tip.label
+data.frame(no=1:50, sp=clade_names_sorted)
 #some meta data
 clade_table <- clade_table[clade_names_recon,]
 ages <- unlist(lapply(all_mod_avg_recon, function(x) max(branching.times(x$phy))))
@@ -371,7 +437,7 @@ for (i in seq_along(clade_names_recon)) {
 C <- vcv(phy_bb)
 dC <- diag(C)
 H <- max(branching.times(phy_bb))
-# make everything ultrametric 
+# make everything ultrametric
 for(i in 1:Ntip(phy_bb)){
   to_add <- H - dC[i]
   index <- phy_bb$edge[,2] == i
@@ -408,7 +474,9 @@ plot.phylo_custom(x = phy_bb,
                   open.angle = 15, 
                   rotate.tree = 8.5,
                   root.edge = TRUE,
-                  plot=FALSE)
+                  plot=FALSE,
+                  x.lim=c(-165, 165),
+                  y.lim=c(-165, 165))
 
 # Define shades of grey
 greys <- brewer.pal(9, "Greys")[1:6]
@@ -458,19 +526,20 @@ palette <- brewer.pal(12, "Set3")
 colors <- rep(palette, length.out = 51)
 # colors <- viridis::rocket(51)
 for (i in seq_along(clade_names_sorted)) {
-  # Sys.sleep(.2)
+  Sys.sleep(.2)
   tip_label <- clade_names_sorted[i]
   subtree <- all_mod_avg_recon[[tip_label]]$phy
-  focal_tips <- which(phy_bb$tip.label %in% subtree$tip.label)
+  sub_tips <- subtree$tip.label[subtree$edge[,2][subtree$edge[,2] <= Ntip(subtree)]]
+  focal_tips <- match(sub_tips, phy_bb$tip.label)
   tip_states <- rowSums(all_model_list[[tip_label]][[1]]$data[,c(2,3)]) + 1
   names(tip_states) <- all_model_list[[tip_label]][[1]]$data[,1]
-  if(length(tip_states)!=length(focal_tips)){
-    print(tip_label)
-    next
-  }
+  # if(length(tip_states)!=length(focal_tips)){
+  #   print(tip_label)
+  #   next
+  # }
   tip_coords <- getPolygonCoords(tip_coord, 1.005, 1.02, focal_tips, TRUE)
   tip_coords$col <- cols[tip_states]
-  poly_coords <- getPolygonCoords(tip_coord, 1.0275, 1.05, focal_tips)
+  poly_coords <- getPolygonCoords(tip_coord, 1.0275, 1.05, focal_tips, FALSE, i!=29)
   num_coords <- find_centroid(poly_coords[,1], poly_coords[,2])
   num_coords <- num_coords * 161/sqrt(sum(num_coords^2))
   for(j in 1:nrow(tip_coords)){
