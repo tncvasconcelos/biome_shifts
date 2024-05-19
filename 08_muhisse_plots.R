@@ -193,7 +193,7 @@ apply(outlier_points, 1, function(x) placePolygon(x[1], x[2], x[3], x[4], x[5], 
 # inlaid boxplot
 # par(fig=c(0.495, 0.99, 0.05, 0.38), new=TRUE, mar=c(.1, .1, .1, .1))
 # dev.off()
-pdf("plots/trans-turn-boxplot.pdf")
+pdf("plots/trans-turn-boxplot.pdf", height=5, width=8)
 boxplot(bar_dat, main="", xlab="", ylab="", axes=FALSE, outline = FALSE,
         col=c("#b10026", "#fc9272", "#034e7b", "#74a9cf"),
         ylim=range(bar_dat)*c(1.1, 1),
@@ -224,7 +224,7 @@ dev.off()
 
 #### observed state transi
 
-pdf("plots/turns-obs-boxplot.pdf")
+pdf("plots/turns-obs-boxplot.pdf", height=5, width=8)
 brew_col <- brewer.pal(9, "Set1")[c(3,6,5)]
 cols <- setNames(brew_col, c("closed", "widespread", "open"))
 boxplot(obs_dat, main="", xlab="", ylab="", axes=FALSE, outline = FALSE,
@@ -290,8 +290,8 @@ aic_table <- do.call(rbind, lapply(all_model_list, GetAICWeights))
 rownames(aic_table) <- clade_names
 head(aic_table)
 
-dev.off()
-i = 1
+#dev.off()
+#i = 1
 # get model average recon
 all_mod_avg_recon <- list()
 for(i in 1:length(all_recon_list)){
@@ -567,6 +567,7 @@ dev.off()
 ### ancestral states by time plot!!
 ##############################
 
+pdf("plots/ancestral_states_through_time.pdf", height=5, width=8)
 bins <- seq(from=0, to=130, by=5)
 recon_by_time <- list()
 for(i in seq_along(clade_names_recon)){
@@ -608,7 +609,8 @@ dat_scaled <- dat_scaled[,ncol(dat_scaled):1]
 
 ###### plotting
 
-dev.off()
+#dev.off()
+
 cols_mod <- make_less_vibrant(cols, 0.75, 1)
 par(mar=c(0,0,.5,0))
 barplot(dat_prop, 
@@ -675,9 +677,9 @@ segments(x0 = ncol(dat_prop)+1, y0 = ticks_y,
 labels <- c(0,10,100,1000,10000)
 text(x = ncol(dat_prop)+1.15, y = ticks_y, labels = labels, 
      srt = 0, adj = 0, xpd = TRUE)
-text(x = ncol(dat_prop)+3, y = mean(ticks_y), labels = "Raw Number", 
+text(x = ncol(dat_prop)+3, y = mean(ticks_y), labels = "Number of lineages", 
      srt = 90, adj = 0.5, xpd = TRUE)
-
+dev.off()
 # states <- phy_bb$node.label
 # 
 # times <- times[!is.na(states)]
