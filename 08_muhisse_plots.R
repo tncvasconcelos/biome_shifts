@@ -85,7 +85,7 @@ obs_dat <- obs_dat[phy_bb$tip.label,]
 # plot(lm_dat)
 # boxplot(bar_dat)
 # fit model
-fit = phylolm(d_turns ~ d_trans - 1, data=lm_dat, phy=phy_bb, boot = 1000)
+fit = phylolm(d_turns ~ d_trans, data=lm_dat, phy=phy_bb, boot = 1000)
 summary(fit)
 
 # determine outliers
@@ -123,20 +123,28 @@ segments(x0 = -0.05, y0 = ticks_y, x1 = 0.05, y1 = ticks_y)
 text(x = 0.2, y = ticks_y, labels = round(ticks_y, 2), srt = 0, adj = 0, xpd = TRUE)
 text(x = -0.4, y = max(lm_dat$d_turns), labels = expression(Delta * log(turnover~rates)), srt = 90, adj = 1, cex = 1.25)
 
-# regression line and CI
-slope <- coef(fit)
-slope_ci <- confint(fit)
+# prepare CI data 
+X <- cbind(1, 
+           seq(from=min(lm_dat$d_trans)*2, to=max(lm_dat$d_trans)*2, length.out=100))
+Y_hat <- X %*% fit$coefficients  # Predicted values
+Var_Y_hat <- diag(X %*% fit$vcov %*% t(X))
+t_value <- qt(0.975, df = fit$n - length(fit$coefficients))
+CI_lower <- Y_hat - t_value * sqrt(Var_Y_hat + fit$sigma2)
+CI_upper <- Y_hat + t_value * sqrt(Var_Y_hat + fit$sigma2)
+CI_results <- data.frame(Y_hat = as.vector(Y_hat), 
+                         CI_lower = as.vector(CI_lower), 
+                         CI_upper = as.vector(CI_upper))
+X_plot <- X[,2]
+sorted_indices <- order(X_plot) 
+X_plot <- X_plot[sorted_indices]
+sorted_Y_hat <- CI_results$Y_hat[sorted_indices]
+sorted_CI_lower <- CI_results$CI_lower[sorted_indices]
+sorted_CI_upper <- CI_results$CI_upper[sorted_indices]
+mat_data <- cbind(sorted_Y_hat, sorted_CI_lower, sorted_CI_upper)
 
-x_range <- seq(from=min(lm_dat$d_trans)*2, to=max(lm_dat$d_trans)*2, length.out=100)
-y_main = x_range * slope
-y_lower = x_range * slope_ci[1]
-y_upper = x_range * slope_ci[2]
-
-polygon(x=c(x_range, rev(x_range)), y=c(y_lower, rev(y_upper)), col=rgb(0.6784314, 0.8470588, 0.9019608, .25), border=NA)
-
-abline(a = 0, b = slope, col = "#737373", lwd = 2)
-abline(a = 0, b = slope_ci[1], col = "#6BAED6", lty = "dashed")  
-abline(a = 0, b = slope_ci[2], col = "#6BAED6", lty = "dashed")  
+# plotting
+matlines(X_plot, mat_data, lty = c(1, 2, 2), col = c("#737373", "#6BAED6", "#6BAED6"), lwd = c(2,1,1))
+polygon(c(X_plot, rev(X_plot)), c(sorted_CI_lower, rev(sorted_CI_upper)), col = rgb(0.6784314, 0.8470588, 0.9019608, .25), border = NA)
 
 # add points
 palette <- brewer.pal(12, "Set3")
@@ -170,23 +178,23 @@ dev.off()
 
 # loc<- locator(1)
 # print(loc)
-outlier_points$image_x <- c(-1.7, -3.28, -4, 4, 2, 6, 1, -2.3, -1.2, 1.7)
-outlier_points$image_y <- c(2.5, -2.8, 2, 3.2, 5.3, 4.4, -5.1, -5.2, -3.2, 2.8)
-outlier_points$names <- rownames(outlier_points)
-placePolygon <- function(x_init, y_init, x_poly, y_poly, pointName, side=1){
-  x_init <- as.numeric(x_init)
-  y_init <- as.numeric(y_init)
-  x_poly <- as.numeric(x_poly)
-  y_poly <- as.numeric(y_poly)
-  left <- x_poly - side / 2
-  bottom <- y_poly - side / 2
-  right <- x_poly + side / 2
-  top <- y_poly + side / 2
-  segments(x_init, y_init, x_poly, y_poly, col = "black", lty = 2)
-  polygon(c(left, left, right, right), y = c(top, bottom, bottom, top), col = "white")
-  text(x_poly, top + 0.05 * (top - bottom), labels = pointName, pos = 3)
-}
-apply(outlier_points, 1, function(x) placePolygon(x[1], x[2], x[3], x[4], x[5], 1))
+# outlier_points$image_x <- c(-1.7, -3.28, -4, 4, 2, 6, 1, -2.3, -1.2, 1.7)
+# outlier_points$image_y <- c(2.5, -2.8, 2, 3.2, 5.3, 4.4, -5.1, -5.2, -3.2, 2.8)
+# outlier_points$names <- rownames(outlier_points)
+# placePolygon <- function(x_init, y_init, x_poly, y_poly, pointName, side=1){
+#   x_init <- as.numeric(x_init)
+#   y_init <- as.numeric(y_init)
+#   x_poly <- as.numeric(x_poly)
+#   y_poly <- as.numeric(y_poly)
+#   left <- x_poly - side / 2
+#   bottom <- y_poly - side / 2
+#   right <- x_poly + side / 2
+#   top <- y_poly + side / 2
+#   segments(x_init, y_init, x_poly, y_poly, col = "black", lty = 2)
+#   polygon(c(left, left, right, right), y = c(top, bottom, bottom, top), col = "white")
+#   text(x_poly, top + 0.05 * (top - bottom), labels = pointName, pos = 3)
+# }
+# apply(outlier_points, 1, function(x) placePolygon(x[1], x[2], x[3], x[4], x[5], 1))
 # 
 
 
