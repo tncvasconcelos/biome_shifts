@@ -574,7 +574,7 @@ dev.off()
 ### ancestral states by time plot!!
 ##############################
 
-pdf("plots/ancestral_states_through_time.pdf", height=5, width=8)
+pdf("plots/ancestral_states_through_time.pdf", height=4, width=9)
 bins <- seq(from=0, to=130, by=5)
 recon_by_time <- list()
 for(i in seq_along(clade_names_recon)){
@@ -659,7 +659,7 @@ ticks_x <- 0:ncol(dat_prop)
 segments(x0 = ticks_x, y0 = -0.05, x1 = ticks_x, y1 = -0.06) 
 text(x = ticks_x, y = -0.075, 
      labels = c(c("110"), colnames(dat_prop)), 
-     srt = 45, adj = 1)
+     srt = 45, adj = 1, cex=0.7)
 text(x = mean(ticks_x), y = -.15, labels = "Age (MY)", 
      srt = 0, adj = 0.5, xpd = TRUE)
 
