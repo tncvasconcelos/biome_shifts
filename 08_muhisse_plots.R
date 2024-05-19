@@ -16,7 +16,7 @@ library(RColorBrewer)
 
 plot_data <- read.csv("all_par_table.csv")
 plot_data <- plot_data[plot_data$Group != "Quercus",]
-
+plot_data <- plot_data[plot_data$Group != "Araceae",]
 
 ##############################
 ### correcting tip labels
@@ -29,7 +29,7 @@ phy_bb$tip.label <- unlist(lapply(strsplit(phy_bb$tip.label, "_"), function(x) x
 to_drop <- phy_bb$tip.label[!phy_bb$tip.label %in% dat_names]
 phy_bb <- drop.tip(phy_bb, to_drop)
 # plotTree(phy_bb, fsize=0.75, ftype="i")
-tip_names <- phy_bb$tip.label
+clade_names_sorted <- tip_names <- phy_bb$tip.label
 
 
 ##############################
@@ -255,6 +255,7 @@ dev.off()
 # finished model sets for particular datsets
 to_load <- dir("5_results/", full.names = TRUE)
 to_load <- to_load[-grep("Quercus", to_load)]
+to_load <- to_load[-grep("Araceae", to_load)]
 
 all_model_list <- list()
 for(i in 1:length(to_load)){
@@ -272,6 +273,7 @@ names(all_model_list) <- clade_names_res
 
 to_load <- dir("6_recons/", full.names = TRUE)
 to_load <- to_load[-grep("Quercus", to_load)]
+to_load <- to_load[-grep("Araceae", to_load)]
 
 all_recon_list <- list()
 for(i in 1:length(to_load)){
@@ -283,7 +285,7 @@ clade_names <- unlist(lapply(strsplit(to_load, "recon_"), function(x) gsub(".RDa
 clade_names <- unlist(lapply(strsplit(clade_names, "-"), function(x) x[[1]]))
 clade_names <- unlist(lapply(strsplit(clade_names, "_"), function(x) x[[1]]))
 clade_names_recon <- clade_names
-all(match(clade_names_recon, clade_names_res) == 1:50)
+all(match(clade_names_recon, clade_names_res) == 1:49)
 
 # the calculation
 aic_table <- do.call(rbind, lapply(all_model_list, GetAICWeights))
@@ -316,18 +318,23 @@ for(i in 1:length(all_recon_list)){
 }
 
 ##############################
-### plotting ancestral states for 51!!!!! clades...
+### CLADE TABLE
 ##############################
 
 names(all_mod_avg_recon) <- clade_names_recon
 clade_table <- read.csv("clade_size_age_major_group.csv")
 clade_table <- clade_table[clade_table$sp != "Quercus",]
+clade_table <- clade_table[clade_table$sp != "Araceae",]
 rownames(clade_table) <- clade_table$sp
 clade_table <- clade_table[clade_names_recon,]
 ages <- unlist(lapply(all_mod_avg_recon, function(x) max(branching.times(x$phy))))
 ntips <- unlist(lapply(all_mod_avg_recon, function(x) Ntip(x$phy)))
 brew_col <- brewer.pal(9, "Set1")[c(3,6,5)]
 cols <- setNames(brew_col, c("closed", "widespread", "open"))
+
+##############################
+### plotting ancestral states for 51!!!!! clades...
+##############################
 
 ##### set focal clade
 focal_clade <- "monocot"
@@ -399,7 +406,7 @@ names(all_mod_avg_recon) <- clade_names_recon
 # all(clade_names_recon %in% phy_bb$tip.label)
 # all(phy_bb$tip.label %in% clade_names_recon)
 clade_names_sorted <- phy_bb$tip.label
-data.frame(no=1:50, sp=clade_names_sorted)
+data.frame(no=1:49, sp=clade_names_sorted)
 #some meta data
 clade_table <- clade_table[clade_names_recon,]
 ages <- unlist(lapply(all_mod_avg_recon, function(x) max(branching.times(x$phy))))
@@ -675,7 +682,7 @@ segments(x0 = ncol(dat_prop)+1, y0 = ticks_y,
 labels <- c(0,10,100,1000,10000)
 text(x = ncol(dat_prop)+1.15, y = ticks_y, labels = labels, 
      srt = 0, adj = 0, xpd = TRUE)
-text(x = ncol(dat_prop)+3, y = mean(ticks_y), labels = "Raw Number", 
+text(x = ncol(dat_prop)+3.4, y = mean(ticks_y), labels = "Number of \nLinneages", 
      srt = 90, adj = 0.5, xpd = TRUE)
 
 # states <- phy_bb$node.label
