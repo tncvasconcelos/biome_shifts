@@ -1,9 +1,68 @@
+# rm(list=ls())
+setwd("~/biome_shifts/")
+source("00_utility_functions.R")
+
+library(ape)
+library(hisse)
+library(parallel)
+library(phytools)
+library(phylolm)
+library(phytools)
+library(RColorBrewer)
+
+##############################
+### load data
+##############################
+
+plot_data <- read.csv("all_par_table.csv")
+plot_data <- plot_data[plot_data$Group != "Quercus",]
+plot_data <- plot_data[plot_data$Group != "Araceae",]
+
+##############################
+### correcting tip labels
+##############################
+
+phy_bb <- read.tree("backbone_tree.tre")
+dat_names <- unlist(lapply(strsplit(paste(plot_data$Group), " "), function(x) x[[1]]))
+phy_bb$tip.label <- unlist(lapply(strsplit(phy_bb$tip.label, "-"), function(x) x[[1]]))
+phy_bb$tip.label <- unlist(lapply(strsplit(phy_bb$tip.label, "_"), function(x) x[[1]]))
+to_drop <- phy_bb$tip.label[!phy_bb$tip.label %in% dat_names]
+phy_bb <- drop.tip(phy_bb, to_drop)
+# plotTree(phy_bb, fsize=0.75, ftype="i")
+clade_names_sorted <- tip_names <- phy_bb$tip.label
+
+
+##############################
+### regression of mean rateclass rate against turnover
+##############################
+rate_class_a_rate <- cbind(plot_data$f00_t01_a,
+                           plot_data$f01_t00_a,
+                           plot_data$f01_t11_a,
+                           plot_data$f11_t01_a)
+rate_class_b_rate <- cbind(plot_data$f00_t01_b,
+                           plot_data$f01_t00_b,
+                           plot_data$f01_t11_b,
+                           plot_data$f11_t01_b)
+rate_class_a_turn <- cbind(plot_data$tn_00_a,
+                           plot_data$tn_01_a,
+                           plot_data$tn_11_a)
+rate_class_b_turn <- cbind(plot_data$tn_00_b,
+                           plot_data$tn_01_b,
+                           plot_data$tn_11_b)
+obs_00_turn <- cbind(plot_data$tn_00_a,
+                     plot_data$tn_00_b)
+obs_01_turn <- cbind(plot_data$tn_01_a,
+                     plot_data$tn_01_b)
+obs_11_turn <- cbind(plot_data$tn_11_a,
+                     plot_data$tn_11_b)
+
+
 # scatter plot of diff
 lm_dat <- data.frame(row.names = gsub(" .*", "", plot_data[,1]),
-                     d_trans = (log(rowMeans(rate_class_b_rate)) - 
-                       log(rowMeans(rate_class_a_rate))),
-                     d_turns = (log(rowMeans(rate_class_b_turn)) - 
-                       log(rowMeans(rate_class_a_turn))))
+                     d_trans = log(rowMeans(rate_class_b_rate)) - 
+                       log(rowMeans(rate_class_a_rate)),
+                     d_turns = log(rowMeans(rate_class_b_turn)) - 
+                       log(rowMeans(rate_class_a_turn)))
 
 init_fit = phylolm(d_turns ~ d_trans , data=lm_dat, phy=phy_bb, boot = 1000)
 summary(init_fit)
@@ -32,15 +91,15 @@ for(j in 1:10000){
     }
   }
   
-  lm_dat <- data.frame(row.names = gsub(" .*", "", plot_data[,1]),
+  lm_dat_tmp <- data.frame(row.names = gsub(" .*", "", plot_data[,1]),
                        d_trans = d_trans,
                        d_turns = d_turns)
-  fit = phylolm(d_turns ~ d_trans, data=lm_dat, phy=phy_bb, boot = 0)
+  fit_tmp = phylolm(d_turns ~ d_trans, data=lm_dat_tmp, phy=phy_bb, boot = 0)
   # plot(lm_dat, ylim=c(-6, 6), xlim=c(-6, 6))
   # abline(fit)
   # abline(v=0)
   # abline(h=0)
-  all_fits[[j]] <- fit
+  all_fits[[j]] <- fit_tmp
   # Sys.sleep(.2)
 }
 
