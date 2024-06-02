@@ -1,8 +1,9 @@
 ---
 title: 'SX: Regression Distribution Results'
 output:
-  pdf_document: default
+  word_document: default
   html_notebook: default
+  pdf_document: default
 ---
 
 ## Label switching and the impact on regression results
