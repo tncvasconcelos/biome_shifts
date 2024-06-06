@@ -345,14 +345,14 @@ cols <- setNames(brew_col, c("closed", "widespread", "open"))
 ##############################
 
 ##### set focal clade
-focal_clade <- "monocot"
-clade_index <- clade_table[,1] == focal_clade
+focal_clade <- "other"
+clade_index <- clade_table[,1] == 'magnolids' | clade_table[,1] == 'unplaced'
 names(clade_index) <- clade_names_recon
 focal_ages <- sort(ages[clade_index], TRUE)
 heights <- ntips[clade_index]/sum(ntips[clade_index]) + .1
 heights <- heights[names(focal_ages)]
 nclades <- length(which(clade_index))
-pdf(file = paste0("plots/", focal_clade,"-asr-plot.pdf"), height = 20, width = 5)
+pdf(file = paste0("plots/", focal_clade,"-asr-plot.pdf"), height = 4, width = 5)
 layout(matrix(1:nclades, ncol = 1), heights = heights)
 par(mar=c(.1,.1,.1,.1))
 for(i in 1:nclades){
