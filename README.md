@@ -35,7 +35,8 @@ Description of folders:
 ----
 Scripts:
 
-> 00_utility_functions.R  
+> 00_utility_functions.R
+  
 Script containing custom functions necessary to run all following scripts. Often these functions are used repeatedly in different scripts.
 
 
