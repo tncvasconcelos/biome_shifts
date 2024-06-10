@@ -35,8 +35,8 @@ Description of folders:
 ----
 Scripts:
 
-> 00_utility_functions.R
-A commonly sourced script containing custom functions necessary to run all following scripts. Often these functions are used repeatedly in different scripts.
+> 00_utility_functions.R  
+Script containing custom functions necessary to run all following scripts. Often these functions are used repeatedly in different scripts.
 
 
 > 01.1_retaxizing_trees.R
