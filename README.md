@@ -1,4 +1,4 @@
-Codes and datasets used in: [] (in prep)
+Codes and datasets used in: Rates of biome shift predict diversification dynamics in flowering plants (submitted)
 
 Authors:
 James D. Boyko and Thais Vasconcelos
@@ -8,28 +8,36 @@ James D. Boyko and Thais Vasconcelos
 Description of folders: 
  
 - **1_occurrence_data/** 
+  
+Folder containing filtered occurrence points and list of biomes where species occur. 
 
 
+- **2_trees/** 
+ 
+Folder containing original taxized tree files used in all analyses. 
 
-- **2.1_trees/** 
-
-
-
-- **3_organized_datasets_geohisse/** 
-
-
-
-- **4_organized_trees_geohisse/**
+- **3_organized_datasets_muhisse/** 
+  
+Folder containing input files for muhisse analyses.
 
 
+- **4_organized_trees_muhisse/**
+
+Folder containing input trees for muhisse analyses.
 
 - **5_results/** 
+  
 .Rdata files containing results of muhisse from 05_run_muhisse.R. the muhisse objects are saved as 'res.'
 
-
-- **6_recons/** 
+- **6_recons/**
+  
 .Rdata files containing ancestral state reconstructions from 06_muhisse_recon.R. the recon objects are saved as 'recon.'
 
+- **plots/**
+
+- **tables/**
+
+- **taxized_reference_tables/**
 
 
 ----
