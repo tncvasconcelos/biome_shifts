@@ -232,7 +232,7 @@ dev.off()
 
 #### observed state transi
 
-pdf("plots/turns-obs-boxplot.pdf", height=5, width=8)
+pdf("plots/turns-obs-boxplot.pdf", height=5, width=10)
 brew_col <- brewer.pal(9, "Set1")[c(3,6,5)]
 cols <- setNames(brew_col, c("closed", "widespread", "open"))
 boxplot(obs_dat, main="", xlab="", ylab="", axes=FALSE, outline = FALSE,
