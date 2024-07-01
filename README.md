@@ -1,4 +1,4 @@
-Codes and datasets used in: [] (in prep)
+Codes and datasets used in: Rates of biome shift predict diversification dynamics in flowering plants (submitted)
 
 Authors:
 James D. Boyko and Thais Vasconcelos
@@ -8,74 +8,82 @@ James D. Boyko and Thais Vasconcelos
 Description of folders: 
  
 - **1_occurrence_data/** 
+  
+Folder containing filtered occurrence points and list of biomes where species occur. 
 
 
+- **2_trees/** 
+ 
+Folder containing original taxized tree files used in all analyses. 
 
-- **2.1_trees/** 
-
-
-
-- **3_organized_datasets_geohisse/** 
-
-
-
-- **4_organized_trees_geohisse/**
+- **3_organized_datasets_muhisse/** 
+  
+Folder containing input files for muhisse analyses.
 
 
+- **4_organized_trees_muhisse/**
+
+Folder containing input trees for muhisse analyses.
 
 - **5_results/** 
+  
 .Rdata files containing results of muhisse from 05_run_muhisse.R. the muhisse objects are saved as 'res.'
 
-
-- **6_recons/** 
+- **6_recons/**
+  
 .Rdata files containing ancestral state reconstructions from 06_muhisse_recon.R. the recon objects are saved as 'recon.'
 
+- **plots/**
 
+ Folder for output of plotting calls.
+
+- **tables/**
+  
+Ancestral state reconstruction results
+
+- **taxized_reference_tables/**
+
+Reference tables containing POWO names in one column and GBIF names in another. Useful for harmonizing taxonomic backbone before running GBIF queries.
+ 
 
 ----
 Scripts:
 
 > 00_utility_functions.R
-A commonly sourced script containing custom functions necessary to run all following scripts. Often these functions are used repeatedly in different scripts.
+  
+Script containing custom functions necessary to run all following scripts. Often these functions are used repeatedly in different scripts.
 
 
-> 01.1_retaxizing_trees.R
+> 01_taxizing_trees.R
 
-
-
-> 01_organizing_trees.R
-
-
-
-> 02.1_visual_inspection_post_curation.R
-
-
+Finds names for species sampled in the trees under the GBIF taxonomic backbone. 
 
 > 02_sending_names_gbif.R
-
-
+  
+Runs a GBIF query for taxized species names sampled in the trees.
 
 > 03_clean_gbif.R
 
+Filters GBIF occurrence points according to the POWO shapefiles and some common problems (see methods).
 
-
-> 04_get_habitat.R
-
-
+> 04_get_biome_type.R
+  
+Uses the filtered occurrence points to find the prevalent biome types for each species.
 
 > 05_run_muhisse.R
+  
 Loads processed data from previous scripts and formats the data to match muhisse model specificiations. Then creates a set of muhisse models which allow for character dependent and character independent rate hetoergeneity. Fits and saves the muhisse models for all data.
 
-
 > 06_muhisse_recon.R
-Preforms ancestral state reconstruction on previous muhisse results (see 05_run_muhisse.R).
-
-
+  
+Performs ancestral state reconstruction on previous muhisse results (see 05_run_muhisse.R).
+  
 > 07_muhisse_table.R
+  
 Summarizes the parameters of previous muhisse results (see 05_run_muhisse.R). This summarization includes model averaging based on AIC weight of each model applied to each dataset. This script produces the table 'all_par_table.csv' containing model averaged parameters. 
 
-
 > 08_muhisse_plots.R
+  
 Generates plots based on the data from 'all_par_table.csv'. Additionally, runs significance tests via phylogenetic t-tests and phylogenetic generalized least squares regression. 
 
 
