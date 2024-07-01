@@ -8,7 +8,7 @@ source("00_utility_functions.R")
 data("wrld_simpl")
 
 # Load distribution data (thinned points)
-thinned_points <- as.data.frame(fread("cleaned_points.csv"))
+thinned_points <- as.data.frame(fread("1_occurrence_data/cleaned_points.csv"))
 
 #--------------------------------------
 # Add information on the main biome type for each point and species
