@@ -341,7 +341,7 @@ test_hypotheses <- function(model_res){
 }
 
 
-evaluate_difference <- function(model_list, type = "rate_class"){
+evaluate_difference <- function(model_list, type = "rate_class", mod_avg = TRUE){
   model_table <- get_model_table(model_list)
   par_list <- lapply(model_list, convert_muhisse_pars)
   out <- c()
@@ -497,7 +497,13 @@ evaluate_difference <- function(model_list, type = "rate_class"){
       out <- rbind(out, c(trans_rates,turns,ef))
     }
   }
-  return(colSums(out * model_table$AICwt))
+  if(mod_avg){
+    return(colSums(out * model_table$AICwt))
+  }else{
+    tmp <- vector("numeric", length(model_table$AICwt))
+    tmp[which.max(model_table$AICwt)] <- 1
+    return(colSums(out * tmp))
+  }
 }
 
 

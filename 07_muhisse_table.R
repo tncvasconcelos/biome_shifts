@@ -36,10 +36,19 @@ clade_names <- unlist(lapply(strsplit(clade_names, "_"), function(x) x[[1]]))
 clade_names <- paste0(clade_names, " (", n_tips, ")")
 # the calculation
 aic_table <- do.call(rbind, lapply(all_model_list, GetAICWeights))
+rownames(aic_table) <- clade_names
+aic_table <- round(aic_table, 3)
+write.csv(aic_table, "tables/full_aicwt_table.csv")
 which_models <- do.call(rbind, lapply(all_model_list[[1]], test_hypotheses))
 result_matrix <- aic_table %*% which_models
 rownames(result_matrix) <- clade_names
 head(result_matrix)
+
+
+par_table <- do.call(rbind, lapply(all_model_list[[1]], function(x) x$index.par))
+colnames(par_table) <- names(all_model_list[[1]][[1]]$solution)
+par_table <- par_table[,-unlist(sapply(LETTERS[-c(1,2)], function(x) grep(x, colnames(par_table))))]
+write.csv(par_table, file = "tables/par_table.csv")
 
 # Add row names as a column
 result_matrix <- as.data.frame(result_matrix)
@@ -49,7 +58,11 @@ result_matrix$RowNames <- rownames(result_matrix)
 result_matrix_long <- result_matrix %>%
   pivot_longer(cols = -RowNames, names_to = "Variable", values_to = "Value")
 
-result_matrix_long$Variable <- factor(result_matrix_long$Variable, unique(result_matrix_long$Variable))
+write.csv(result_matrix, file = "tables/modeling_support_table.csv")
+
+result_matrix$RowNames[result_matrix$hidden_incl < 0.5]
+
+# result_matrix_long$Variable <- factor(result_matrix_long$Variable, unique(result_matrix_long$Variable))
 colnames(result_matrix_long)[1] <- "id"
 # Create the heatmap
 #D01B1B, #FF4242, #FFFFFF, #e7f9ff, #95D2EC and #47abd8. 
@@ -94,11 +107,17 @@ both_differ_clade_names <- clade_names[result_matrix$both_differ > 0.5]
 both_differ_model_table <- lapply(both_differ_model_list, get_model_table)
 
 # plot data for heterogenous clades
-plot_data_het <- cbind(Group = both_differ_clade_names, as.data.frame(do.call(rbind, lapply(both_differ_model_list, function(x) evaluate_difference(x, type = "all")))))
+plot_data_het <- cbind(Group = both_differ_clade_names, 
+  as.data.frame(do.call(rbind, 
+    lapply(both_differ_model_list, function(x) 
+      evaluate_difference(x, type = "all", FALSE)))))
 plot_data_het <- as.data.frame(plot_data_het)
 
 # plot data for all clades
-plot_data_all <- cbind(Group = clade_names, as.data.frame(do.call(rbind, lapply(all_model_list, function(x) evaluate_difference(x, type = "all")))))
+plot_data_all <- cbind(Group = clade_names, 
+  as.data.frame(do.call(rbind, 
+    lapply(all_model_list, function(x) 
+      evaluate_difference(x, type = "all", FALSE)))))
 plot_data_all <- as.data.frame(plot_data_all)
 
 plot_data <- plot_data_all
@@ -110,7 +129,13 @@ plot_data$Group <- gsub(" .*", "", plot_data$Group)
 plot_data$ntip <- n_tips
 
 write.csv(plot_data, file = "all_par_table.csv", row.names = FALSE)
-colMeans(plot_data[,-1])
 
+mean_rates <- apply(plot_data[,-1], 2, mean)
+logmean_rates <- apply(plot_data[,-1], 2, function(x) exp(mean(log(x))))
+median_rates <- apply(plot_data[,-1], 2, median)
 
+mean_rates[1:4] + mean_rates[5:8]
+logmean_rates[1:4] + logmean_rates[5:8]
+median_rates[1:4] + median_rates[5:8]
 
+head(plot_data)
