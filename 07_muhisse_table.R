@@ -1,5 +1,5 @@
 # rm(list=ls())
-setwd("~/biome_shifts/")
+setwd("~/Desktop/biome_shifts/")
 source("00_utility_functions.R")
 
 library(ape)
@@ -76,7 +76,7 @@ phy_bb <- drop.tip(phy_bb, which(is.na(phy_bb$tip.label)))
 a <- ggtree(phy_bb) +
   geom_tiplab() +
   coord_cartesian(xlim = c(0, 180)) +
-  ggtitle("a) Backbone Phylog10eny")
+  ggtitle("a) Backbone Phylogeny")
 
 b <- ggplot(result_matrix_long, aes(x = Variable, y = id, fill = Value)) +
   ggtitle("b) Support for rate heterogeneity") +
