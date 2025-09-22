@@ -1,39 +1,37 @@
-
 library(ape)
-# Load the package (after installation, see above).
-library(optimx)   # optimx seems better than R's default optim()
-library(GenSA)    # GenSA seems better than optimx (but slower) on 5+ parameters, 
-# seems to sometimes fail on simple problems (2-3 parameters)
-library(FD)       # for FD::maxent() (make sure this is up-to-date)
-library(snow)     # (if you want to use multicore functionality; some systems/R versions prefer library(parallel), try either)
+library(optimx)   
+library(GenSA)   
+library(FD)      
+library(snow)     
 library(parallel)
 library(rexpokit)
 library(cladoRcpp)
-# library(BioGeoBEARS)
 
-# WWFload is taken from speciesgeocodeR; all credit goes to the original authors
-WWFload <- function(x = NULL) {
-  if (missing(x)) {
-    x <- getwd()
-  }
-  download.file("http://assets.worldwildlife.org/publications/15/files/original/official_teow.zip",
-                destfile = file.path(x, "wwf_ecoregions.zip"), quiet=TRUE)
-  unzip(file.path(x, "wwf_ecoregions.zip"), exdir = file.path(x, "WWF_ecoregions"))
-  file.remove(file.path(x, "wwf_ecoregions.zip"))
-  wwf <- maptools::readShapeSpatial(file.path(x, "WWF_ecoregions", "official",
-                                              "wwf_terr_ecos.shp"))
-  return(wwf)
-}
+# # WWFload is taken from speciesgeocodeR; all credit goes to the original authors
+# WWFload <- function(x = NULL) {
+#   if (missing(x)) {
+#     x <- getwd()
+#   }
+#   download.file("http://assets.worldwildlife.org/publications/15/files/original/official_teow.zip",
+#                 destfile = file.path(x, "wwf_ecoregions.zip"), quiet=TRUE)
+#   unzip(file.path(x, "wwf_ecoregions.zip"), exdir = file.path(x, "WWF_ecoregions"))
+#   file.remove(file.path(x, "wwf_ecoregions.zip"))
+#   wwf <- maptools::readShapeSpatial(file.path(x, "WWF_ecoregions", "official",
+#                                               "wwf_terr_ecos.shp"))
+#   return(wwf)
+# }
 
-
+ 
 localityToBiome <- function (points, lat="lat",lon="lon") {
-  #colnames(points) <- c("acceptedScientificName","key","decimalLatitude","decimalLongitude","basisOfRecord","issues")
+  shapefile_path <- file.path(getwd(), "WWF_ecoregions", "official", "wwf_terr_ecos.shp")
+  wwf <- sf::st_read(shapefile_path, quiet = TRUE)
   cat("Getting biome from locality data...")
   points[,lat] <-  as.numeric(points[,lat])
   points[,lon] <-  as.numeric(points[,lon])
   locations.spatial <- sp::SpatialPointsDataFrame(coords=points[,c(which(colnames(points)==lon), which(colnames(points)==lat))], data=points)
-  wwf <- WWFload(tempdir())
-  mappedregions <- sp::over(locations.spatial, wwf)
+  wwf_sp <- as(wwf, "Spatial")  
+  crs(locations.spatial) <- "+proj=longlat +datum=WGS84 +no_defs" 
+  mappedregions <- sp::over(locations.spatial, wwf_sp)
   biomes <- c("Tropical & Subtropical Moist Broadleaf Forests", "Tropical & Subtropical Dry Broadleaf Forests", "Tropical & Subtropical Coniferous Forests", "Temperate Broadleaf & Mixed Forests", "Temperate Conifer Forests", "Boreal Forests/Taiga", "Tropical & Subtropical Grasslands, Savannas & Shrubland", "Temperate Grasslands, Savannas & Shrublands", "Flooded Grasslands & Savannas", "Montane Grasslands & Shrublands", "Tundra", "Mediterranean Forests, Woodlands & Scrub", "Deserts & Xeric Shrublands", "Mangroves")
   points$eco_name <- mappedregions$ECO_NAME
   points$biome <- biomes[mappedregions$BIOME]
@@ -44,50 +42,86 @@ localityToBiome <- function (points, lat="lat",lon="lon") {
 # getting biomes for each species
 getBiomes <- function (points, species="species") {
   cat("Summarizing biome from locality data...")
-  points <- as.data.frame(points) # not sure how to do it without transforming back to data.frame
+  #points <- as.data.frame(points) # not sure how to do it without transforming back to data.frame
   points <- subset(points, !is.na(points[,"biome"]))
   categories <- unique(points[,"biome"])
   taxa <- as.character(unique(points[,species]))
-  result <- matrix(0, nrow=length(taxa), ncol=length(categories))
-  rownames(result) <- taxa
-  colnames(result) <- categories
+  result <- as.data.frame(matrix(0, nrow=length(taxa), ncol=length(categories)+1))
+  colnames(result)[1] <- "species"
+  colnames(result)[2:ncol(result)] <- categories
+  result$species <- taxa
   cat("\n")
   for (taxon_index in seq_along(taxa)) {
     for (category_index in seq_along(categories)) {
       x0 <- points[,species]==taxa[taxon_index]
       x1 <- points[,"biome"]==categories[category_index]
-      result[taxon_index, category_index] <- length(which(x0 & x1))
+      result[taxon_index, category_index+1] <- length(which(x0 & x1))
     }
     cat(taxon_index, "\r")
   }
   return(result)
 }
 
-resolve.names <- function(names_to_solve) {
-  gnr_resolve_x <- function(x) {
-    sources <- taxize::gnr_datasources()
-    tmp.name <- suppressWarnings(taxize::gnr_resolve(names=x, data_source_ids=sources$id[sources$title == "GBIF Backbone Taxonomy"], best_match_only=TRUE)$matched_name)
-    if(is.null(tmp.name)) {
-      tmp.name <- paste0(x,"_UNMATCHED")
+# resolve.names <- function(names_to_solve) {
+#   gnr_resolve_x <- function(x) {
+#     sources <- taxize::gnr_datasources()
+#     tmp.name <- suppressWarnings(taxize::gnr_resolve(names=x, data_source_ids=sources$id[sources$title == "GBIF Backbone Taxonomy"], best_match_only=TRUE)$matched_name)
+#     if(is.null(tmp.name)) {
+#       tmp.name <- paste0(x,"_UNMATCHED")
+#     }
+#     return(tmp.name)
+#   }
+#   all_names <- pbapply::pblapply(names_to_solve, gnr_resolve_x, cl=6)
+#   return(as.character(all_names))
+# }
+# 
+# 
+# resolve.names <- function(names_to_solve) {
+#   gnr_resolve_x <- function(x) {
+#     sources <- taxize::gnr_datasources()
+#     tmp.name <- suppressWarnings(taxize::gnr_resolve(names=x, data_source_ids=sources$id[sources$title == "GBIF Backbone Taxonomy"], best_match_only=TRUE)$matched_name)
+#     if(is.null(tmp.name)) {
+#       tmp.name <- paste0(x,"_UNMATCHED")
+#     }
+#     return(tmp.name)
+#   }
+#   all_names <- pbapply::pblapply(names_to_solve, gnr_resolve_x, cl=6)
+#   return(as.character(all_names))
+# }
+# 
+# resolve.names <- function(names_to_solve) {
+#   # gnr_resolve_x <- function(x) {
+#   sources <- taxize::gna_data_sources()
+#   tmp.name <- taxize::gna_verifier(names=names_to_solve,data_sources=sources$id[sources$title == "Global Biodiversity Information Facility Backbone Taxonomy"],best_match_only=TRUE)$currentName
+#   #   if(is.null(tmp.name)) {
+#   #     tmp.name <- paste0(x,"_UNMATCHED")
+#   #   }
+#   #   return(tmp.name)
+#   # }
+#   # all_names <- pbapply::pblapply(names_to_solve, gnr_resolve_x, cl=1)
+#   #return(as.character(all_names))
+#   return(as.character(tmp.name))
+# }
+
+resolveGBIF_synonyms <- function(name) {
+  all_names <- list()
+  for(i in 1:length(name)) {
+    one_name <- name[i]
+    taxon_info <- name_backbone(one_name)
+    if("scientificName" %in% colnames(taxon_info)) {
+      all_names_for_one_taxon <- taxon_info$scientificName
+      synonyms <- name_usage(key = taxon_info$usageKey, data = "synonyms")$data
+      if(nrow(synonyms)>0) {
+        synonym_names <- synonyms$scientificName
+        all_names_for_one_taxon <- c(all_names_for_one_taxon, synonym_names)
+      }
     }
-    return(tmp.name)
+    all_names[[i]] <- all_names_for_one_taxon
+    cat(i, "\r")
   }
-  all_names <- pbapply::pblapply(names_to_solve, gnr_resolve_x, cl=6)
-  return(as.character(all_names))
+  return(all_names)
 }
 
-resolve.names <- function(names_to_solve) {
-  gnr_resolve_x <- function(x) {
-    sources <- taxize::gnr_datasources()
-    tmp.name <- suppressWarnings(taxize::gnr_resolve(names=x, data_source_ids=sources$id[sources$title == "GBIF Backbone Taxonomy"], best_match_only=TRUE)$matched_name)
-    if(is.null(tmp.name)) {
-      tmp.name <- paste0(x,"_UNMATCHED")
-    }
-    return(tmp.name)
-  }
-  all_names <- pbapply::pblapply(names_to_solve, gnr_resolve_x, cl=6)
-  return(as.character(all_names))
-}
 
 load.trees <- function(tree.dir) {
   tree_files <- list.files(tree.dir, full.names = T)
@@ -103,73 +137,73 @@ load.trees <- function(tree.dir) {
   return(all_trees)
 }
 
-
-simplify.names.taxize <- function(names) {
-  results <- c()
-  for(name_index in 1:length(names)){
-    one_tmp_string <- names[name_index]
-    splitted_names <- strsplit(one_tmp_string," ")[[1]]
-    genus <- splitted_names[1]
-    epiphet <- splitted_names[2]
-    if(any(grepl("indet_sp",splitted_names))) {
-      full_name <- "tip_to_drop" # indet species
-    } else {
-      if(stringr::str_detect(epiphet,"[[:upper:]]")) {
-        full_name <- "tip_to_drop" # indet species
-      } else {
-        if(length(splitted_names) == 2) { 
-          full_name <- paste(c(genus, epiphet), collapse = " ")
-        } else {
-          if(length(splitted_names) > 2) {
-            complement <- splitted_names[3:length(splitted_names)]
-            if(grepl("[()]", complement[1])) {
-              full_name <- paste(c(genus, epiphet), collapse = " ")
-            } else {
-              if(stringr::str_detect(complement[1],"[[:upper:]]")) {
-                full_name <- paste(c(genus, epiphet), collapse = " ")
-              } else {
-                complement <- subset(complement, !stringr::str_detect(complement,"[[:upper:]]"))
-                complement <- subset(complement, !grepl(paste(c("[()]","&","([0-9]+).*$","^ex$"), collapse="|"), complement))
-                if(length(complement)==0){
-                  full_name <- paste(c(genus, epiphet), collapse = " ")
-                } else {
-                  full_name <- paste(c(genus, epiphet, complement), collapse = " ")
-                }
-              }
-            } 
-          }
-        }  
-      }
-    }
-    results[name_index] <- full_name
-  }
-  return(results)
-}
-
-
-fix.names.taxize <- function(focal_species_trees) {
-  for(name_index in 1:length(focal_species_trees)){
-    one_tmp_string <- focal_species_trees[name_index]
-    if(any(grepl("[()]", one_tmp_string))){
-      splitted_names <- strsplit(one_tmp_string," ")[[1]]
-      begin_author <- which(grepl("[()]", splitted_names))[1]
-      species_name <- paste0(splitted_names[1:(begin_author-1)], collapse=" ")
-      author <- splitted_names[begin_author:length(splitted_names)]
-      old_authors <- author[grep("[()]", author)]
-      end_first_half <- floor(length(old_authors)/2)
-      before <- old_authors[1:end_first_half]
-      after <- old_authors[(end_first_half+1):(length(old_authors))]
-      if(paste(before,collapse = " ") == paste(after, collapse=" ")) {
-        author <- paste(author[1:(length(author)/2)], collapse=" ")
-        focal_species_trees[name_index] <- paste0(species_name, " ", author, collapse=" ")
-      } else {
-        author <- paste(author, collapse=" ")
-        focal_species_trees[name_index] <- paste0(species_name, " ", author, collapse=" ")
-      }
-    }
-  }
-  return(focal_species_trees)
-}
+# 
+# simplify.names.taxize <- function(names) {
+#   results <- c()
+#   for(name_index in 1:length(names)){
+#     one_tmp_string <- names[name_index]
+#     splitted_names <- strsplit(one_tmp_string," ")[[1]]
+#     genus <- splitted_names[1]
+#     epiphet <- splitted_names[2]
+#     if(any(grepl("indet_sp",splitted_names))) {
+#       full_name <- "tip_to_drop" # indet species
+#     } else {
+#       if(stringr::str_detect(epiphet,"[[:upper:]]")) {
+#         full_name <- "tip_to_drop" # indet species
+#       } else {
+#         if(length(splitted_names) == 2) { 
+#           full_name <- paste(c(genus, epiphet), collapse = " ")
+#         } else {
+#           if(length(splitted_names) > 2) {
+#             complement <- splitted_names[3:length(splitted_names)]
+#             if(grepl("[()]", complement[1])) {
+#               full_name <- paste(c(genus, epiphet), collapse = " ")
+#             } else {
+#               if(stringr::str_detect(complement[1],"[[:upper:]]")) {
+#                 full_name <- paste(c(genus, epiphet), collapse = " ")
+#               } else {
+#                 complement <- subset(complement, !stringr::str_detect(complement,"[[:upper:]]"))
+#                 complement <- subset(complement, !grepl(paste(c("[()]","&","([0-9]+).*$","^ex$"), collapse="|"), complement))
+#                 if(length(complement)==0){
+#                   full_name <- paste(c(genus, epiphet), collapse = " ")
+#                 } else {
+#                   full_name <- paste(c(genus, epiphet, complement), collapse = " ")
+#                 }
+#               }
+#             } 
+#           }
+#         }  
+#       }
+#     }
+#     results[name_index] <- full_name
+#   }
+#   return(results)
+# }
+# 
+# 
+# fix.names.taxize <- function(focal_species_trees) {
+#   for(name_index in 1:length(focal_species_trees)){
+#     one_tmp_string <- focal_species_trees[name_index]
+#     if(any(grepl("[()]", one_tmp_string))){
+#       splitted_names <- strsplit(one_tmp_string," ")[[1]]
+#       begin_author <- which(grepl("[()]", splitted_names))[1]
+#       species_name <- paste0(splitted_names[1:(begin_author-1)], collapse=" ")
+#       author <- splitted_names[begin_author:length(splitted_names)]
+#       old_authors <- author[grep("[()]", author)]
+#       end_first_half <- floor(length(old_authors)/2)
+#       before <- old_authors[1:end_first_half]
+#       after <- old_authors[(end_first_half+1):(length(old_authors))]
+#       if(paste(before,collapse = " ") == paste(after, collapse=" ")) {
+#         author <- paste(author[1:(length(author)/2)], collapse=" ")
+#         focal_species_trees[name_index] <- paste0(species_name, " ", author, collapse=" ")
+#       } else {
+#         author <- paste(author, collapse=" ")
+#         focal_species_trees[name_index] <- paste0(species_name, " ", author, collapse=" ")
+#       }
+#     }
+#   }
+#   return(focal_species_trees)
+# }
 
 convert2Lambda <- function(pars){
   if(is.na(pars[1])){
@@ -602,6 +636,7 @@ FilterWCVP_genus <- function(points, all_vars, twgd_data, lon="decimalLongitude"
       if(nrow(area_plus_buffer)>0) {
         coords <- gbif_subset[,c("x","y")]
         sp::coordinates(coords) <- ~ x + y
+        crs(coords) <- "+proj=longlat +datum=WGS84 +no_defs"
         answer <- which(is.na(sp::over(coords, area_plus_buffer)[,3]))
         if(length(answer) != 0) {
           dubiousGBIF_ids <- c(dubiousGBIF_ids, as.character(gbif_subset$gbifID[answer]))
@@ -639,6 +674,7 @@ FilterWCVP <- function(points, all_vars, reference_table, twgd_data, species= "s
       if(nrow(area_plus_buffer)>0) {
         coords <- gbif_subset[,c("x","y")]
         sp::coordinates(coords) <- ~ x + y
+        crs(coords) <- "+proj=longlat +datum=WGS84 +no_defs"
         answer <- which(is.na(sp::over(coords, area_plus_buffer)[,3]))
         if(length(answer) != 0) {
           dubiousGBIF_ids <- c(dubiousGBIF_ids, as.character(gbif_subset$gbifID[answer]))
@@ -647,38 +683,39 @@ FilterWCVP <- function(points, all_vars, reference_table, twgd_data, species= "s
     }
     cat(species_index, "\r")
   }
+  #save(dubiousGBIF_ids, file="345857.Rsave")
   cleaned_points <- subset(points, !as.character(points$gbifID) %in% dubiousGBIF_ids)
   npoints_end <- nrow(cleaned_points)
   print(paste0(npoints_start - npoints_end, " points removed."))
   return(cleaned_points)
 }
-
-# Getting climate means per TWGD region
-MeanRasterWCVP <- function(path_raster="3_Landscape_instability/bio_1_instability.tif", path_tdwg="wgsrpd-master/level3/level3.shp") {
-  twgd_data <- suppressWarnings(maptools::readShapeSpatial(path_tdwg))
-  raster_example <- raster(path_raster)
-  template_map <- raster_example
-  template_map[!is.na(template_map[])] <- 0
-  template_map <- aggregate(template_map, fact=25)
-  raster_list <- list()
-  for(area_index in 1:length(twgd_data)){
-    one_area <- twgd_data[area_index,]
-    cropped_raster <- NULL
-    try(cropped_raster <- mask(crop(raster_example, one_area), one_area))
-    if(!is.null(cropped_raster)) {
-      mean_value <- mean(subset(cropped_raster[], !is.na(cropped_raster[])))
-      template_raster <- cropped_raster
-      template_raster[!is.na(template_raster[])] <- mean_value
-      template_raster <- aggregate(template_raster, fact=25)
-      template_raster <- raster::resample(template_raster, template_map)
-      raster_list[[area_index]] <- raster::mask(template_raster, template_map) 
-      print(area_index)
-    } else { next }
-  }
-  raster_list[which(unlist(lapply(raster_list, is.null)))] <- NULL
-  mm <- do.call(merge, raster_list)
-  return(mm)
-}
+# 
+# # Getting climate means per TWGD region
+# MeanRasterWCVP <- function(path_raster="3_Landscape_instability/bio_1_instability.tif", path_tdwg="wgsrpd-master/level3/level3.shp") {
+#   twgd_data <- suppressWarnings(maptools::readShapeSpatial(path_tdwg))
+#   raster_example <- raster(path_raster)
+#   template_map <- raster_example
+#   template_map[!is.na(template_map[])] <- 0
+#   template_map <- aggregate(template_map, fact=25)
+#   raster_list <- list()
+#   for(area_index in 1:length(twgd_data)){
+#     one_area <- twgd_data[area_index,]
+#     cropped_raster <- NULL
+#     try(cropped_raster <- mask(crop(raster_example, one_area), one_area))
+#     if(!is.null(cropped_raster)) {
+#       mean_value <- mean(subset(cropped_raster[], !is.na(cropped_raster[])))
+#       template_raster <- cropped_raster
+#       template_raster[!is.na(template_raster[])] <- mean_value
+#       template_raster <- aggregate(template_raster, fact=25)
+#       template_raster <- raster::resample(template_raster, template_map)
+#       raster_list[[area_index]] <- raster::mask(template_raster, template_map) 
+#       print(area_index)
+#     } else { next }
+#   }
+#   raster_list[which(unlist(lapply(raster_list, is.null)))] <- NULL
+#   mm <- do.call(merge, raster_list)
+#   return(mm)
+# }
 
 ############################
 #' Removes points in the sea
@@ -870,14 +907,15 @@ RemoveNoDecimal <- function(points, lon="decimalLongitude", lat="decimalLatitude
 #' @param lat A character string indicating name of column with latitudes
 #' @param lon character string indicating name of column with longitudes
 #' @param n A number indicating how many points to keep in each cell after thinning
-Thinning <- function(points, species="species", lat = "decimalLatitude", lon="decimalLongitude", n = 3) {
+Thinning <- function(points, lat = "decimalLatitude", lon="decimalLongitude", n = 3) {
   tmp_points = points
+  tmp_points <- as.data.frame(tmp_points)
   colnames(tmp_points)[colnames(tmp_points)==lon] <- "x"
   colnames(tmp_points)[colnames(tmp_points)==lat] <- "y"
-  spp <- unique(tmp_points[,species])
+  spp <- unique(tmp_points[,"scientificName"])
   results <- list()
   for(species_index in 1:length(spp)) {
-    coords <- tmp_points[tmp_points[,species]==spp[species_index],c("y","x")]
+    coords <- tmp_points[tmp_points[,"scientificName"]==spp[species_index],c("y","x")]
     coords <- coords[!duplicated(coords[,"x"]) & !duplicated(coords[,"y"]),]
     if(nrow(coords) > 1) {
       sp::coordinates(coords) <- ~ y + x

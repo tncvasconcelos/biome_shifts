@@ -26,6 +26,12 @@ for(i in 1:length(all_area_files)){
 }
 
 
+# all_clades_start <- read.csv("treebank_info_simplified.csv")
+# all_clades_final <- data.frame(clade=names(all_areas), n_final=unlist(lapply(all_areas, nrow)))
+# summary_clades <- merge(all_clades_start, all_clades_final, by.x="label", by.y="clade")
+# summary_clades$prop_tips <- summary_clades$n_final / summary_clades$n_tips_ingroup
+
+
 focal_clades <- gsub(".Rsave","",all_trees_files)
 ### Import data
 state_list <- list()

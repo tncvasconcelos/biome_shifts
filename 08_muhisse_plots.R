@@ -1,4 +1,5 @@
 # rm(list=ls())
+# setwd("~/Desktop/biome_shifts")
 setwd("~/biome_shifts/")
 source("00_utility_functions.R")
 
@@ -8,13 +9,12 @@ library(parallel)
 library(phytools)
 library(phylolm)
 
+plot_data <- read.csv("all_par_table.csv")
 
 ##############################
 ### Creating tip rates table
 ##############################
-<<<<<<< HEAD
 # models
-=======
 rate_class_a_rate <- cbind(plot_data$f00_t01_a,
                            plot_data$f01_t00_a,
                            plot_data$f01_t11_a,
@@ -241,7 +241,6 @@ dev.off()
 ##############################
 
 # finished model sets for particular datsets
->>>>>>> d525b47ee6dd43c95996d5a996905433b75077e9
 to_load <- dir("5_results/", full.names = TRUE)
 to_load <- to_load[-grep("Quercus", to_load)]
 to_load <- to_load[-grep("Araceae", to_load)]
