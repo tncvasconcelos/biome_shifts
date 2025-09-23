@@ -26,12 +26,6 @@ for(i in 1:length(all_area_files)){
 }
 
 
-# all_clades_start <- read.csv("treebank_info_simplified.csv")
-# all_clades_final <- data.frame(clade=names(all_areas), n_final=unlist(lapply(all_areas, nrow)))
-# summary_clades <- merge(all_clades_start, all_clades_final, by.x="label", by.y="clade")
-# summary_clades$prop_tips <- summary_clades$n_final / summary_clades$n_tips_ingroup
-
-
 focal_clades <- gsub(".Rsave","",all_trees_files)
 ### Import data
 state_list <- list()
@@ -40,28 +34,8 @@ for (group_index in 1:length(focal_clades)) {
   group = names(all_areas)[group_index] # name the group
   tree <- all_trees[[group_index]] # load tree file 
   dist <- all_areas[[group_index]] # load distribution file 
-  
-  # Preparing data - areas have to be as 0 (11 - widespread), 
-  # 1 (10, endemic of first area) 
-  # and 2 (01, endemic of second area)
   dist <- as.data.frame(dist)
-  dist$area <- 0
-  #   areas <- as.data.frame(rep(1, nrow(dist)))
-  #   dist <- cbind(dist, areas)
-  #   colnames(dist)[7] <- "area"
-  
-  for (i in 1:length(dist$area)){
-    if (dist[i, "area_open"] == 1 & dist[i, "area_closed"] == 1){
-      dist[i, "area"] = 0 
-    }
-    if (dist[i, "area_open"] == 0 & dist[i, "area_closed"] == 1){
-      dist[i, "area"] = 1
-    }
-    if (dist[i, "area_open"] == 1 & dist[i, "area_closed"] == 0){
-      dist[i, "area"] = 2
-    }
-  }
-  state_list[[group_index]]<-dist[,c("species", "area")]
+  state_list[[group_index]]<-dist[,c("species", "area_open", "area_closed")]
   names(state_list)[group_index] <- group
   # in the dataframe and tree
   included_species <- intersect(state_list[[group_index]][,1], tree$tip.label)
@@ -70,56 +44,44 @@ for (group_index in 1:length(focal_clades)) {
   all_areas[[group_index]] <- all_areas[[group_index]][match(all_areas[[group_index]][,1], included_species), ]
 }
 
-# model partitions
-# ef and turn
-# 111
-# 123
-# 111 111
-# 111 222
-# 123 123
-# 123 456
-# q_mat
-# 1<>2<>3
-# 1<>2<>3 1<>2<>3
-# 1<>2<>3 4<>5<>6
-
 # single rate class models
-ef_1 <- list(c(1,1,0,1),
-           c(1,2,0,3))
-turn_1 <- list(c(1,1,0,1),
-             c(1,2,0,3))
+ef_1 <- list(c(0,1,1,1),
+           c(0,1,2,3))
+turn_1 <- list(c(0,1,1,1),
+             c(0,1,2,3))
 
 index_1 <- expand.grid(1:length(ef_1), 1:length(turn_1), 1, "1R")
 
 # two rate class models
-ef_2 <- list(c(1,1,0,1,1,1,0,1),
-             c(1,2,0,3,1,2,0,3),
-             c(1,1,0,1,2,2,0,2),
-             c(1,2,0,3,4,5,0,6))
-turn_2 <- list(c(1,1,0,1,1,1,0,1),
-               c(1,2,0,3,1,2,0,3),
-               c(1,1,0,1,2,2,0,2),
-               c(1,2,0,3,4,5,0,6))
+ef_2 <- list(c(0,1,1,1,0,1,1,1),
+             c(0,1,2,3,0,1,2,3),
+             c(0,1,1,1,0,2,2,2),
+             c(0,1,2,3,0,4,5,6))
+turn_2 <- list(c(0,1,1,1,0,1,1,1),
+               c(0,1,2,3,0,1,2,3),
+               c(0,1,1,1,0,2,2,2),
+               c(0,1,2,3,0,4,5,6))
 
 index_2 <- expand.grid(1:length(ef_2), 1:length(turn_2), 1:2, "2R")
 
 # make the q_mats
 # one rate class
 trans.rate <- TransMatMakerMuHiSSE(hidden.traits=0, make.null = TRUE)
-trans_rate_1 <- ParDrop(trans.rate, c(2,5,6,8))
+trans_rate_1 <- ParDrop(trans.rate, c(1,2,3,5))
 # two rate classes
 trans.rate <- TransMatMakerMuHiSSE(hidden.traits=1, make.null = FALSE)
-trans_rate_2cd <- ParDrop(trans.rate, c(2,5,6,8,10,13,14,16))
+trans_rate_2cd <- ParDrop(trans.rate, c(3,5,11,13,9,10,1,2))
+trans_rate_2cd[1,5] <- trans_rate_2cd[5,1] <- 0
 trans.rate <- TransMatMakerMuHiSSE(hidden.traits=1, make.null = TRUE)
-trans_rate_2cid <- ParDrop(trans.rate, c(2,5,6,8))
+trans_rate_2cid <- ParDrop(trans.rate, c(1,3,2,5))
+trans_rate_2cid[1,5] <- trans_rate_2cid[5,1] <- 0
 
 trans_rate_2 <- list(trans_rate_2cid, trans_rate_2cd)
 
 index <- as.data.frame(rbind(index_1, index_2))
 index_list <- split(index, seq(nrow(index)))
 
-
-ref_table <- read.csv("all_trees_used.csv")
+ref_table <- read.csv("treebank_info_simplified.csv")
 # recalculating sfs
 updated_sfs <- c()
 for(group_index in 1:length(all_trees)) {
@@ -155,19 +117,17 @@ run_single_model <- function(dat, phy, sf, index_row, ef_1, ef_2, turn_1, turn_2
   return(out)
 }
 # Preparing data - areas have to be as 0 (11 - widespread), 
-# 1 (10, endemic of closed) 
-# and 2 (01, endemic of open)
+# 1 (10, endemic of open) 
+# and 2 (01, endemic of closed)
 # we change the data to be:
 # 
 for(i in seq_len(length(state_list))){
-  dat <- state_list[[i]]
-  dat_muhisse <- cbind(dat, dat[,2])
-  dat_muhisse[dat_muhisse[,2] == 0, 3] <- 1
-  dat_muhisse[dat_muhisse[,2] == 1, c(2,3)] <- 0
-  dat_muhisse[dat_muhisse[,2] == 2, c(2,3)] <- 1
+  dat_muhisse <- state_list[[i]]
   phy <- all_trees[[i]]
   sf <- updated_sfs[i]
-  res <- mclapply(index_list, function(x) run_single_model(dat_muhisse, phy, sf, x, ef_1, ef_2, turn_1, turn_2, trans_rate_1, trans_rate_2), mc.cores=36)
+  res <- mclapply(index_list, function(x) 
+    run_single_model(dat_muhisse, phy, sf, x, ef_1, ef_2, turn_1, turn_2, trans_rate_1, trans_rate_2), 
+    mc.cores=9)
   save(res, file=paste0("5_results/results_", names(all_trees)[i], ".RData"))
 }
 
