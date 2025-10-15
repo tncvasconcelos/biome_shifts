@@ -121,13 +121,40 @@ run_single_model <- function(dat, phy, sf, index_row, ef_1, ef_2, turn_1, turn_2
 # and 2 (01, endemic of closed)
 # we change the data to be:
 # 
-for(i in seq_len(length(state_list))){
-  dat_muhisse <- state_list[[i]]
-  phy <- all_trees[[i]]
-  sf <- updated_sfs[i]
-  res <- mclapply(index_list, function(x) 
-    run_single_model(dat_muhisse, phy, sf, x, ef_1, ef_2, turn_1, turn_2, trans_rate_1, trans_rate_2), 
-    mc.cores=9)
-  save(res, file=paste0("5_results/results_", names(all_trees)[i], ".RData"))
+# for(i in seq_len(length(state_list))){
+#   dat_muhisse <- state_list[[i]]
+#   phy <- all_trees[[i]]
+#   sf <- updated_sfs[i]
+#   res <- mclapply(index_list, function(x) 
+#     run_single_model(dat_muhisse, phy, sf, x, ef_1, ef_2, turn_1, turn_2, trans_rate_1, trans_rate_2), 
+#     mc.cores=9)
+#   save(res, file=paste0("5_results/results_", names(all_trees)[i], ".RData"))
+# }
+
+all_runs <- expand.grid(group_index = 1:length(focal_clades), model_index = 1:length(index_list))
+
+run_and_save <- function(run_index) {
+  group_i <- all_runs$group_index[run_index]
+  model_i <- all_runs$model_index[run_index]
+  
+  group_name <- names(all_trees)[group_i]
+  output_filename <- paste0("5_results/res_state", group_name, "_idx", model_i, ".RData")
+  
+  if (!file.exists(output_filename)) {
+    dat_muhisse <- state_list[[group_i]]
+    phy <- all_trees[[group_i]]
+    sf <- updated_sfs[group_i]
+    index_row <- index_list[[model_i]]
+    
+    res <- run_single_model(dat = dat_muhisse, phy = phy, sf = sf, index_row = index_row,
+      ef_1 = ef_1, ef_2 = ef_2, turn_1 = turn_1, turn_2 = turn_2,
+      trans_rate_1 = trans_rate_1, trans_rate_2 = trans_rate_2)
+    
+    save(res, file = output_filename)
+  }
+  return(NULL)
 }
+
+num_cores <- 100
+mclapply(1:nrow(all_runs), run_and_save, mc.cores = num_cores)
 

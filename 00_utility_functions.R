@@ -1,11 +1,11 @@
-library(ape)
-library(optimx)   
-library(GenSA)   
-library(FD)      
-library(snow)     
-library(parallel)
-library(rexpokit)
-library(cladoRcpp)
+# library(ape)
+# library(optimx)   
+# library(GenSA)   
+# library(FD)      
+# library(snow)     
+# library(parallel)
+# library(rexpokit)
+# library(cladoRcpp)
 
 # # WWFload is taken from speciesgeocodeR; all credit goes to the original authors
 # WWFload <- function(x = NULL) {
