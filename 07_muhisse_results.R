@@ -40,18 +40,15 @@ for(i in 1:13){
   all_res[[i]] <- clade_res
 }
 
-output_table <- list()
 slope_table <- c()
+summary_table <- data.frame()
+nm_idx1 <- to_load[grep("idx1.RData", to_load)]
 for(i in 1:13){
   # LRT
   dLik_31 <- all_res[[i]][[1]]$loglik - all_res[[i]][[3]]$loglik
   dLik_32 <- all_res[[i]][[2]]$loglik - all_res[[i]][[3]]$loglik
   p_31 <- pchisq(q = -2*dLik_31, df = 7, lower.tail = FALSE)
   p_32 <- pchisq(q = -2*dLik_32, df = 3, lower.tail = FALSE)
-  
-  if(p_31 > 0.05 | p_32 > 0.05){
-    next
-  }
   
   # Pars
   quickConvert <- function(turn_rate, eps_rate, index = 3){
@@ -80,23 +77,50 @@ for(i in 1:13){
   dm <- (qA - qB)/(dA - dB)
   tm_ln <- (qA_ln - qB_ln)/(tA - tB)
   dm_ln <- (qA_ln - qB_ln)/(dA - dB)
+  clade_i <- gsub(".*res_state(.*)_idx.*", "\\1", nm_idx1[i])
   
+  tmp_table <- data.frame(
+    clade = clade_i,
+    nTip = Ntip(all_res[[i]][[1]]$phy), 
+    p_LRT.M3.M1 = p_31,
+    p_LRT.M3.M2 = p_32,
+    meanTransA = qA,
+    meanTurnA = tA,
+    meanNetDivA = dA,
+    meanTransB = qB,
+    meanTurnB = tB,
+    meanNetDivB = dB,
+    slopeTurn = tm,
+    slopeNetDiv = dm
+    )
+  
+  summary_table <- rbind(summary_table, tmp_table)
+  if(p_31 > 0.05 | p_32 > 0.05){
+    next
+  }
   slope_table <- rbind(slope_table, (c(t = tm, d = dm)))
-  clade_i <- gsub(".*res_state(.*)_idx.*", "\\1", to_load[i])
-  
-  data.frame(clade = clade_i, 
-model = "M1", loglik = all_res[[i]][[1]]$loglik, AIC = all_res[[i]][[1]]$AICc)
 }
+
+summary_table[,-(1:1)] <- round(summary_table[,-(1:1)], 3)
+summary_table <- summary_table[order(
+  summary_table$p_LRT.M3.M1,
+  -summary_table$slopeTurn,
+  -summary_table$slopeNetDiv
+), ]
+
+summary_table[,c(3,4)][summary_table[,c(3,4)] == 0] <- "<0.0001"
+summary_table$clade <- gsub("-.*", "", summary_table$clade)
+summary_table$clade[12] <- "Mimosoids"
+write.csv(summary_table, "tables/summary_table.csv", row.names = FALSE)
 
 SIGN.test(slope_table[,1], md = 0)
 SIGN.test(slope_table[,2], md = 0)
 
 
-
-
 output_table <- data.frame()
+nm_idx1 <- to_load[grep("idx1.RData", to_load)]
 for(i in 1:13){
-  clade_i <- gsub(".*res_state(.*)_idx.*", "\\1", to_load[i])
+  clade_i <- gsub(".*res_state(.*)_idx.*", "\\1", nm_idx1[i])
   
   M1_pars <- all_res[[i]][[1]]$solution[all_res[[i]][[1]]$index.par < 7]
   M2_pars <- all_res[[i]][[2]]$solution[all_res[[i]][[2]]$index.par < 11]
@@ -145,3 +169,5 @@ for(i in 1:13){
 }
 
 head(output_table)
+
+write.csv(output_table, "tables/parameter_table.csv", row.names = FALSE)
