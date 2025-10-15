@@ -80,6 +80,8 @@ trans_rate_2 <- list(trans_rate_2cid, trans_rate_2cd)
 
 index <- as.data.frame(rbind(index_1, index_2))
 index_list <- split(index, seq(nrow(index)))
+# colnames(index) <- c('ef', 'turn', 'q', 'rc')
+write.csv(index, "tables/model_structures.csv", row.names = FALSE)
 
 ref_table <- read.csv("treebank_info_simplified.csv")
 # recalculating sfs

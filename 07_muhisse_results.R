@@ -87,6 +87,8 @@ for(i in 1:13){
   tmp_table <- data.frame(
     clade = clade_i,
     nTip = Ntip(all_res[[i]][[1]]$phy), 
+    bestModel = best_model, 
+    nRateClass = dim(focal_model$trans.matrix)[1]/4,
     AICwt = max(model_table[i,]),
     meanTransA = qA,
     meanTurnA = tA,
@@ -102,7 +104,7 @@ for(i in 1:13){
   slope_table <- rbind(slope_table, (c(t = tm, d = dm)))
 }
 
-summary_table[,-(1:1)] <- round(summary_table[,-(1:1)], 3)
+summary_table[,-(1:4)] <- round(summary_table[,-(1:4)], 3)
 summary_table <- summary_table[order(
   -summary_table$slopeTurn,
   -summary_table$slopeNetDiv
