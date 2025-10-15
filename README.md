@@ -11,7 +11,6 @@ Description of folders:
   
 Folder containing filtered occurrence points and list of biomes where species occur. 
 
-
 - **2_trees/** 
  
 Folder containing original taxized tree files used in all analyses. 
@@ -56,7 +55,7 @@ Script containing custom functions necessary to run all following scripts. Often
 
 > 01_taxizing_trees.R
 
-Finds names for species sampled in the trees under the GBIF taxonomic backbone. 
+Finds names for species sampled in the trees under the WCVP taxonomic backbone. 
 
 > 02_sending_names_gbif.R
   
