@@ -16,8 +16,13 @@ quick_check <- function(model_path){
 failed_load <- to_load[sapply(to_load, quick_check)]
 to_load <- to_load[!sapply(to_load, quick_check)]
 
+to_run <- c(
+  to_load[grep("idx1.RData", to_load)][-c(1,3)],
+  to_load[grep("idx4.RData", to_load)][-c(1,2,3)],
+  to_load[grep("idx31.RData", to_load)[-c(1,3)]]
+)
+
 load(to_load[1])
-res
 
 individual_recon <- function(model_res){
   if(class(model_res)[1] == "try-error"){
@@ -29,7 +34,7 @@ individual_recon <- function(model_res){
   return(recon)
 }
 
-run_solutionrun_recon_path <- function(to_load){
+run_recon_path <- function(to_load){
   load(to_load)
   file_name <- gsub("5_results/", "6_recons/", to_load)
   file_name <- gsub("res_state", "recon", file_name)
@@ -38,7 +43,7 @@ run_solutionrun_recon_path <- function(to_load){
   return(NULL)
 }
 
-num_cores <- 70
-mclapply(to_load, run_recon_path, mc.cores = num_cores)
+num_cores <- 32
+mclapply(to_run, run_recon_path, mc.cores = num_cores)
 
 

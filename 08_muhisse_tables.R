@@ -43,8 +43,10 @@ model_table <- t(sapply(model_table_list, function(x){
   v
 }))
 rownames(model_table) <- sub("_idx1\\.RData$","", basename(nm_idx1))
+rownames(model_table) <- gsub("res_state", "", rownames(model_table))
 model_table <- as.data.frame(model_table)
 model_table <- model_table[,paste0("M", 1:36)]
+write.csv(round(model_table, 3), "tables/model_table.csv")
 
 
 quickConvert2 <- function(turn_rate, eps_rate, index = 3){
@@ -112,5 +114,27 @@ summary_table$clade <- gsub("-.*", "", summary_table$clade)
 summary_table$clade[12] <- "Mimosoids"
 write.csv(summary_table, "tables/summary_table.csv", row.names = FALSE)
 
-SIGN.test(slope_table[,1], md = 0)
-SIGN.test(slope_table[,2], md = 0)
+output_table <- data.frame()
+nm_idx1 <- to_load[grep("idx1.RData", to_load)]
+for(i in 1:13){
+  clade_i <- gsub(".*res_state(.*)_idx.*", "\\1", nm_idx1[i])
+  best_model <- names(which.max(model_table[i,]))
+  
+  focal_model <- all_res[[i]][[best_model]]
+  M_pars <- focal_model$solution[focal_model$index.par < max(focal_model$index.par)]
+
+  tmp <- data.frame(
+    clade = clade_i,
+    model = best_model,
+    loglik = focal_model$loglik,
+    AICc = focal_model$AICc,
+    AICwt = max(model_table[i,]),
+    t(M_pars),
+    check.names = FALSE
+  )
+  output_table <- rbind(output_table, tmp)
+}
+
+output_table[,-c(1,2)] <- round(output_table[,-c(1,2)], 3)
+head(output_table)
+write.csv(output_table, "tables/parameter_table.csv", row.names = FALSE)
