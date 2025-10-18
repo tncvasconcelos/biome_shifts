@@ -41,12 +41,13 @@ ED <- data.frame(
   stringsAsFactors = FALSE
 )
 CM <- c(
-  "2" = "#009900", "3" = "#FFA500", "4" = "#FFFF00", 
-  "6" = "#009900", "7" = "#FFA500", "8" = "#FFFF00"
+  "2" = "#427839", "3" = "#81c241", "4" = "#ee8d28", 
+  "6" = "#427839", "7" = "#81c241", "8" = "#ee8d28"
 )
 h_list <- unlist(lapply(recon_list, function(x) max(branching.times(x$phy))))
-par(mfrow=c(2,6), mar = c(0,0,1.5,0))
-for(i in ord){
+pdf("plots/rate_class_phylogeny.pdf", width = 9, height = 15)
+par(mfrow=c(5,3), mar = c(0.5,0.5,1.5,0.5))
+for(i in seq_along(recon_list)){
   phy <- ladderize(recon_list[[i]]$phy, right = FALSE)
   m_st <- apply(recon_list[[i]]$tip.mat[,-1], 1, which.max)
   m_st <- setNames(m_st, recon_list[[i]]$phy$tip.label[recon_list[[i]]$tip.mat[,1]])
@@ -67,7 +68,8 @@ for(i in ord){
   }
   focal_recon <- recon_list[[i]]$node.mat[,c(3:5,7:9)]
   turnover <- all_pars[grep("turnover", names(all_pars))]
-  V <- colSums(t(focal_recon) * turnover)
+  # V <- colSums(t(focal_recon) * turnover)
+  V <- rowSums(focal_recon[,c(1:3)])
   min_V <- min(V)
   max_V <- max(V)
   range_V <- max_V - min_V
@@ -80,7 +82,8 @@ for(i in ord){
     type = "fan", 
     open.angle = 15, 
     add = TRUE,
-    edge.color = C_all[phy$edge[,1] - Ntip(phy)]
+    edge.color = C_all[phy$edge[,1] - Ntip(phy)],
+    edge.width = 0.75
   )
   # nodelabels(pie = focal_recon, piecol = CM, cex = 0.25)
   P <- get("last_plot.phylo", envir = .PlotPhyloEnv)
@@ -109,13 +112,13 @@ for(i in ord){
   C_pal <- colorRampPalette(c("#4477AA", "#BB3333"))
   T_cols <- C_pal(100)[floor(norm_V * 99) + 1]
   # T_cols <- CM[as.character(m_st[Tip_o])]
-  segments(x0 = X0, y0 = Y0, x1 = X1, y1 = Y1, col = T_cols, lwd = 500/N)
+  # segments(x0 = X0, y0 = Y0, x1 = X1, y1 = Y1, col = T_cols, lwd = 500/N)
   title(clades[i])
   
-  R_e <- H * 1.015 
+  R_e <- H * 1.1 
   X1 <- R_e * cos(Angles)
   Y1 <- R_e * sin(Angles)
-  R_e <- H * 1.00
+  R_e <- H * 1.02
   X0 <- R_e * cos(Angles)
   Y0 <- R_e * sin(Angles)
   T_cols <- CM[as.character(m_st[Tip_o])]
@@ -141,4 +144,5 @@ for(i in ord){
   text(x = X_10, y = Y_s, labels = Tick_10, 
     pos = 1, cex = 0.6, col = "black", srt = 45, offset = 0.5)
 }
+dev.off()
 
