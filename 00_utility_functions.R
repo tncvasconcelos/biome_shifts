@@ -1198,8 +1198,7 @@ circular.plot_custom <- function (edge, Ntip, Nnode, xx, yy, theta, r, edge.colo
     }else{
       focal_co <- co[[k]]
     }
-    segments(x0, y0, x1, y1, col = focal_co, lwd = lw[[k]], 
-             lty = ly[[k]])
+    segments(x0, y0, x1, y1, lwd = lw[[k]])
   }
 }
 
@@ -1583,7 +1582,7 @@ plot.phylo_custom <- function (x, type = "phylogram", use.edge.length = TRUE, no
           edge.lty <- rep_len(edge.lty, Nedge)
           edge.lty <- edge.lty[ereorder]
         }
-        circular.plot_custom(z$edge, Ntip, Nnode, xx, yy, theta, 
+        ape:::circular.plot(z$edge, Ntip, Nnode, xx, yy, theta, 
                       r, edge.color, edge.width, edge.lty)
       }
       else cladogram.plot(x$edge, xx, yy, edge.color, edge.width, 
@@ -1797,3 +1796,28 @@ make_less_vibrant <- function(colors, saturation_decrease = 0.5, brightness_decr
     hsv(x[1], x[2]*saturation_decrease, x[3]*brightness_decrease))
   return(c)
 }
+
+quickConvert2 <- function(turn_rate, eps_rate, index = 3){
+  tmp <- c()
+  for(i in 1:length(turn_rate)){
+    tmp[i] <- convertBetweenPars(c(NA, NA, NA, turn_rate[i], eps_rate[i]))[index]
+  }
+  return(tmp)
+}
+
+
+getPars <- function(focal_model){
+  M_pars <- focal_model$solution[focal_model$index.par < max(focal_model$index.par)]
+  tA <- c(M_pars[1:3])
+  tB <- c(M_pars[14:16])
+  fA <- c(M_pars[4:6])
+  fB <- c(M_pars[17:19])
+  dA <- c(quickConvert2(M_pars[1:3], M_pars[4:6]))
+  dB <- c(quickConvert2(M_pars[14:16], M_pars[17:19]))
+  qA <- c(M_pars[7:10])
+  qB <- c(M_pars[20:23])
+  return(c(tA=tA, tB=tB, fA=fA, fB=fB, dA=dA, dB=dB, qA=qA, qB=qB))
+}
+
+
+

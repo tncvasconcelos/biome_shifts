@@ -18,60 +18,65 @@ quick_check <- function(model_path){
 failed_load <- to_load[sapply(to_load, quick_check)]
 to_load <- to_load[!sapply(to_load, quick_check)]
 
-load(to_load[1])
-res
+nm_idx1 <- to_load[grep("idx1.RData", to_load)]
+all_res <- vector("list", length(nm_idx1))
+model_table_list <- vector("list", length(nm_idx1))
 
-# the model ids that are the "main" structures are 1 (dull null), 4 (bisse), and 31 (hisse null) 
-clade_i <- 1
-model_table <- c()
-all_res <- list()
-for(i in 1:13){
-  clade_i <- i
-  clade_res <- list()
-  load(to_load[grep("idx1.RData", to_load)][clade_i])
-  clade_res[[1]] <- res
-  load(to_load[grep("idx4.RData", to_load)][clade_i])
-  clade_res[[2]] <- res
-  # load(to_load[grep("idx15.RData", to_load)][clade_i])
-  # clade_res[[3]] <- res
-  load(to_load[grep("idx31.RData", to_load)][clade_i])
-  clade_res[[3]] <- res
-  model_table <- rbind(model_table, setNames(GetAICWeights(clade_res), c("M1", "M2","M3")))
+for(i in seq_along(nm_idx1)){
+  clade_name <- sub("_idx1\\.RData$","", basename(nm_idx1[i]))
+  files <- to_load[grepl(paste0("^", clade_name, "_idx[0-9]+\\.RData$"), basename(to_load))]
+  if(length(files) == 0) next
+  idxs <- as.integer(sub(".*_idx([0-9]+)\\.RData$","\\1", files))
+  ord <- order(idxs)
+  files <- files[ord]; idxs <- idxs[ord]
+  clade_res <- lapply(files, function(f){ load(f); res })
+  names(clade_res) <- paste0("M", idxs)
   all_res[[i]] <- clade_res
+  model_table_list[[i]] <- setNames(GetAICWeights(clade_res), names(clade_res))
+}
+
+# combine AIC weight vectors into a rectangular data.frame (NA where a model is missing)
+all_models <- sort(unique(unlist(lapply(model_table_list, names))))
+model_table <- t(sapply(model_table_list, function(x){
+  v <- setNames(rep(NA_real_, length(all_models)), all_models)
+  if(!is.null(x)) v[names(x)] <- x
+  v
+}))
+rownames(model_table) <- sub("_idx1\\.RData$","", basename(nm_idx1))
+model_table <- as.data.frame(model_table)
+model_table <- model_table[,paste0("M", 1:36)]
+
+
+quickConvert2 <- function(turn_rate, eps_rate, index = 3){
+  tmp <- c()
+  for(i in 1:length(turn_rate)){
+    tmp[i] <- convertBetweenPars(c(NA, NA, NA, turn_rate[i], eps_rate[i]))[index]
+  }
+  return(tmp)
 }
 
 slope_table <- c()
 summary_table <- data.frame()
 nm_idx1 <- to_load[grep("idx1.RData", to_load)]
 for(i in 1:13){
-  # LRT
-  dLik_31 <- all_res[[i]][[1]]$loglik - all_res[[i]][[3]]$loglik
-  dLik_32 <- all_res[[i]][[2]]$loglik - all_res[[i]][[3]]$loglik
-  p_31 <- pchisq(q = -2*dLik_31, df = 7, lower.tail = FALSE)
-  p_32 <- pchisq(q = -2*dLik_32, df = 3, lower.tail = FALSE)
-  
+  best_model <- names(which.max(model_table[i,]))
   # Pars
-  quickConvert <- function(turn_rate, eps_rate, index = 3){
-    tmp <- c()
-    for(i in 1:length(turn_rate)){
-      tmp[i] <- convertBetweenPars(c(NA, NA, NA, turn_rate[i], eps_rate[i]))[index]
-    }
-    return(tmp)
+  focal_model <- all_res[[i]][[best_model]]
+  M_pars <- focal_model$solution[focal_model$index.par < max(focal_model$index.par)]
+  if(dim(focal_model$trans.matrix)[1] <= 4){
+    next
   }
-  M1_pars <- all_res[[i]][[1]]$solution[all_res[[i]][[1]]$index.par < 7]
-  M2_pars <- all_res[[i]][[2]]$solution[all_res[[i]][[2]]$index.par < 11]
-  M3_pars <- all_res[[i]][[3]]$solution[all_res[[i]][[3]]$index.par < 14]
   
-  tA <- mean(M3_pars[1:3])
-  tB <- mean(M3_pars[14:16])
-  fA <- mean(M3_pars[4:6])
-  fB <- mean(M3_pars[17:19])
-  dA <- mean(quickConvert(M3_pars[1:3], M3_pars[4:6]))
-  dB <- mean(quickConvert(M3_pars[14:16], M3_pars[17:19]))
-  qA <- mean(M3_pars[7:10])
-  qB <- mean(M3_pars[20:23])
-  qA_ln <- exp(mean(log(M3_pars[7:10])))
-  qB_ln <- exp(mean(log(M3_pars[20:23])))
+  tA <- mean(M_pars[1:3])
+  tB <- mean(M_pars[14:16])
+  fA <- mean(M_pars[4:6])
+  fB <- mean(M_pars[17:19])
+  dA <- mean(quickConvert2(M_pars[1:3], M_pars[4:6]))
+  dB <- mean(quickConvert2(M_pars[14:16], M_pars[17:19]))
+  qA <- mean(M_pars[7:10])
+  qB <- mean(M_pars[20:23])
+  qA_ln <- exp(mean(log(M_pars[7:10])))
+  qB_ln <- exp(mean(log(M_pars[20:23])))
   
   tm <- (qA - qB)/(tA - tB)
   dm <- (qA - qB)/(dA - dB)
@@ -82,8 +87,9 @@ for(i in 1:13){
   tmp_table <- data.frame(
     clade = clade_i,
     nTip = Ntip(all_res[[i]][[1]]$phy), 
-    p_LRT.M3.M1 = p_31,
-    p_LRT.M3.M2 = p_32,
+    bestModel = best_model, 
+    nRateClass = dim(focal_model$trans.matrix)[1]/4,
+    AICwt = max(model_table[i,]),
     meanTransA = qA,
     meanTurnA = tA,
     meanNetDivA = dA,
@@ -92,82 +98,24 @@ for(i in 1:13){
     meanNetDivB = dB,
     slopeTurn = tm,
     slopeNetDiv = dm
-    )
+  )
   
   summary_table <- rbind(summary_table, tmp_table)
-  if(p_31 > 0.05 | p_32 > 0.05){
-    next
-  }
   slope_table <- rbind(slope_table, (c(t = tm, d = dm)))
 }
 
-summary_table[,-(1:1)] <- round(summary_table[,-(1:1)], 3)
+summary_table[,-(1:4)] <- round(summary_table[,-(1:4)], 3)
 summary_table <- summary_table[order(
-  summary_table$p_LRT.M3.M1,
   -summary_table$slopeTurn,
   -summary_table$slopeNetDiv
 ), ]
 
-summary_table[,c(3,4)][summary_table[,c(3,4)] == 0] <- "<0.0001"
 summary_table$clade <- gsub("-.*", "", summary_table$clade)
 summary_table$clade[12] <- "Mimosoids"
 write.csv(summary_table, "tables/summary_table.csv", row.names = FALSE)
 
+print("turnover (speciation + extinction)")
 SIGN.test(slope_table[,1], md = 0)
+print("net div (speciation - extinction)")
 SIGN.test(slope_table[,2], md = 0)
 
-
-output_table <- data.frame()
-nm_idx1 <- to_load[grep("idx1.RData", to_load)]
-for(i in 1:13){
-  clade_i <- gsub(".*res_state(.*)_idx.*", "\\1", nm_idx1[i])
-  
-  M1_pars <- all_res[[i]][[1]]$solution[all_res[[i]][[1]]$index.par < 7]
-  M2_pars <- all_res[[i]][[2]]$solution[all_res[[i]][[2]]$index.par < 11]
-  M3_pars <- all_res[[i]][[3]]$solution[all_res[[i]][[3]]$index.par < 14]
-  
-  all_names <- names(M3_pars)
-  
-  pad_pars <- function(par_vec){
-    res <- setNames(rep(NA, length(all_names)), all_names)
-    res[names(par_vec)] <- par_vec
-    return(res)
-  }
-  
-  M1_full <- pad_pars(M1_pars)
-  M2_full <- pad_pars(M2_pars)
-  M3_full <- pad_pars(M3_pars)
-  
-  tab_M1 <- data.frame(
-    clade = clade_i,
-    model = "M1",
-    loglik = all_res[[i]][[1]]$loglik,
-    AICc = all_res[[i]][[1]]$AICc,
-    t(M1_full),
-    check.names = FALSE
-  )
-  
-  tab_M2 <- data.frame(
-    clade = clade_i,
-    model = "M2",
-    loglik = all_res[[i]][[2]]$loglik,
-    AICc = all_res[[i]][[2]]$AICc,
-    t(M2_full),
-    check.names = FALSE
-  )
-  
-  tab_M3 <- data.frame(
-    clade = clade_i,
-    model = "M3",
-    loglik = all_res[[i]][[3]]$loglik,
-    AICc = all_res[[i]][[3]]$AICc,
-    t(M3_full),
-    check.names = FALSE
-  )
-  
-  output_table <- rbind(output_table, tab_M1, tab_M2, tab_M3)
-}
-
-head(output_table)
-
-write.csv(output_table, "tables/parameter_table.csv", row.names = FALSE)
