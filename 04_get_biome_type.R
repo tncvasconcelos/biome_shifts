@@ -13,6 +13,8 @@ for(i in 1:length(all_thinned_points)) {
   all_points[[i]] <- as.data.frame(fread(one_point_file))
 }
 thinned_points <- do.call(rbind,all_points)
+# nrow(thinned_points)
+# 2264540
 
 all_trees <- load.trees("2_trees/")
 treebank_info <- read.csv("treebank_info_simplified.csv")
@@ -27,6 +29,7 @@ biomes_for_points <- subset(biomes_for_points, biomes_for_points$species%in%all_
 
 biomes_for_species <- getBiomes(points=biomes_for_points, species="species") # we want summaries for each species
 # save(biomes_for_species, file="1_occurrence_data/biomes_for_species.Rsave")
+# load(file="1_occurrence_data/biomes_for_species.Rsave")
 # biomes_for_species <- as.data.frame(biomes_for_species)
 # write.csv(biomes_for_species, file="1_occurrence_data/biomes_for_species.csv")
 
@@ -106,8 +109,6 @@ table(summarized_habitat$area_final)
 habitats <- read.csv("1_occurrence_data/summarized_biome.csv")
 
 all_trees <- load.trees("2_trees/")
-treebank_info <- read.csv("treebank_info_simplified.csv")
-all_trees <- subset(all_trees, names(all_trees) %in% treebank_info$label[treebank_info$large_and_well_sampled=="y"])
 
 colnames(habitats)[1] <- "species"
 ntips_total <- data.frame(tree=names(all_trees),ntips_start=NA,ntips_end=NA)

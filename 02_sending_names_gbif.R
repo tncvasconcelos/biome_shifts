@@ -5,18 +5,17 @@
 library(rgbif)
 source("00_utility_functions.R")
 
-# Only trees that are reasonably sampled will be kept
-all_trees <- load.trees("2_trees/")
-summary_trees <- read.csv("treebank_info_simplified.csv")
-summary_trees <- subset(summary_trees, summary_trees$large_and_well_sampled=="y")
-trees <- subset(all_trees, names(all_trees) %in% summary_trees$label)
+trees <- load.trees("2_trees/")
+
+# sum(unlist(lapply(trees, Ntip)))
+# [1] 11593
 
 # Now we send a request to GBIF to download the points for this list of species 
 user <- "" # username
 pwd <- "" # password
-email <- "thais.nogales@gmail.com" # email
+email <- "@gmail.com" # email
 
-# Get all synonyms
+# Get all GBIF synonyms
 all_tips_to_gbif <- c()
 for(tree_index in 1:length(trees)) {
   name <- trees[[tree_index]]$tip.label
@@ -38,7 +37,6 @@ for(tree_index in 1:length(trees)) {
   tips_one_tree_syn <- unlist(all_names)
   
   rgbif::occ_download(rgbif::pred_in("scientificName", tips_one_tree_syn),
-                      #pred_in("basisOfRecord", 'PRESERVED_SPECIMEN'),
                       pred("hasCoordinate", TRUE),
                       format = "SIMPLE_CSV", user=user,pwd=pwd,email=email) # Sending request to GBIF  
   
@@ -46,5 +44,18 @@ for(tree_index in 1:length(trees)) {
   save(all_tips_to_gbif, file="1_occurrence_data/list_of_synonyms.Rsave")
 }
 
-#load("1_occurrence_data/list_of_synonyms.Rsave")
+
+# sum(2259058,
+# 1080134,
+# 30638,
+# 2839886,
+# 80223,
+# 1986922,
+# 11818494,
+# 1533602,
+# 9536019,
+# 900717,
+# 491703,
+# 1285232,
+# 7654275)
 

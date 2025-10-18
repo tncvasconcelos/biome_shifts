@@ -1,5 +1,5 @@
 # rm(list=ls())
-setwd("~/biome_shifts")
+# setwd("~/biome_shifts")
 
 library(ape)
 library(hisse)
@@ -25,6 +25,28 @@ for(i in 1:length(all_area_files)){
   names(all_areas)[i] <- gsub("_area_score.Rsave","",all_area_files[i])
 }
 
+
+#all_clades <- do.call(rbind,all_areas)
+#nrow(all_clades)
+#[1] 10474
+
+# summarized_habitat <- all_clades
+# 
+# for (i in 1:nrow(summarized_habitat)){
+#   if (summarized_habitat[i, "area_open"] == 1 & summarized_habitat[i, "area_closed"] == 1){
+#     summarized_habitat[i, "area_final"] = "widespread"
+#   }
+#   if (summarized_habitat[i, "area_open"] == 0 & summarized_habitat[i, "area_closed"] == 1){
+#     summarized_habitat[i, "area_final"] = "closed"
+#   }
+#   if (summarized_habitat[i, "area_open"] == 1 & summarized_habitat[i, "area_closed"] == 0){
+#     summarized_habitat[i, "area_final"] = "open"
+#   }
+# }
+# 
+# table(summarized_habitat$area_final)
+# # closed       open widespread 
+# # 5257       3305       1912 
 
 focal_clades <- gsub(".Rsave","",all_trees_files)
 ### Import data
