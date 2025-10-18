@@ -114,5 +114,8 @@ summary_table$clade <- gsub("-.*", "", summary_table$clade)
 summary_table$clade[12] <- "Mimosoids"
 write.csv(summary_table, "tables/summary_table.csv", row.names = FALSE)
 
+print("turnover (speciation + extinction)")
 SIGN.test(slope_table[,1], md = 0)
+print("net div (speciation - extinction)")
 SIGN.test(slope_table[,2], md = 0)
+
