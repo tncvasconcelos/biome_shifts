@@ -1,0 +1,14 @@
+label,group,author,year,doi,family,major_group,n_tips_ingroup,sf_ingroup
+Antirrhineae-Gorospe_et_al-2020,Antirrhineae,Gorospe_et_al,2020,10.1111/jbi.13939,Plantaginaceae,asterids,336,1
+Apioideae-Banasiak_et_al-2013,Apioideae,Banasiak_et_al,2013,10.1111/jbi.12071,Apiaceae,asterids,1194,0.41
+Arabideae-Huang_et_al-2019,Arabideae,Huang_et_al,2019,10.1093/aob/mcz123,Brassicaceae,rosids,347,0.6
+Arecaceae-Onstein_et_al-2018,Arecaceae,Onstein_et_al,2018,10.1098/rspb.2018.0882,Arecaceae,monocots,2048,1
+Carex-MartinBravo_et_al-2019,Carex,MartinBravo_et_al,2019,10.1111/jse.12549,Cyperaceae,monocots,1386,0.69
+Eucalypts-Thornhill_et_al-2019,Eucalypts,Thornhill_et_al,2019,10.1071/SB18015,Myrtaceae,rosids,716,0.9
+Fagales-Xing_et_al-2014,Fagales,Xing_et_al,2014,10.1111/evo.12489,NA,rosids,579,0.42
+Mimosoids_Ringelberg_et_al_2023,Mimosoids,Ringelberg_et_al,2023,10.1126/sciadv.ade4954,Fabaceae,,2078,0.59
+NeoAstragalus-Folk_et_al-2024,NeoAstragalus,Folk_et_al,2024,10.1002/ajb2.16299,Fabaceae,,373,0.45
+Onagraceae-Freyman_&_Hohna-2018,Onagraceae,Freyman_&_Höhna,2018,10.1093/sysbio/syy078,Onagraceae,rosids,292,0.45
+Restionaceae-Linder-2020,Restionaceae,Linder,2020,10.1093/aob/mcaa129,Restionaceae,monocots,351,0.7
+Salvia-Kriebel_et_al-2020,Salvia,Kriebel_et_al,2020,10.1111/evo.14030,Lamiaceae,asterids,519,0.52
+Solanaceae-Sarkinen_et_al-2013,Solanaceae,Sarkinen_et_al,2013,10.1186/1471-2148-13-214,Solanaceae,asterids,1075,0.4
