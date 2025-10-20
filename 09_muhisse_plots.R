@@ -41,8 +41,8 @@ ED <- data.frame(
   stringsAsFactors = FALSE
 )
 CM <- c(
-  "2" = "#427839", "3" = "#81c241", "4" = "#ee8d28", 
-  "6" = "#427839", "7" = "#81c241", "8" = "#ee8d28"
+  "2" = "#427839", "3" = "#ee8d28", "4" = "#81c241", 
+  "6" = "#427839", "7" = "#ee8d28", "8" = "#81c241"
 )
 h_list <- unlist(lapply(recon_list, function(x) max(branching.times(x$phy))))
 pdf("plots/rate_class_phylogeny.pdf", width = 9, height = 15)
